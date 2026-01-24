@@ -59,7 +59,8 @@ export class OpenRouterClient {
         }
     ): Promise<string> {
         if (!this.apiKey) {
-            throw new Error('OpenRouter API key is required but was not provided.');
+            console.warn('OpenRouter API key is required but was not provided. Returning dummy response.');
+            return "OpenRouter API key is missing. Please configure it to enable AI features.";
         }
         const messages: OpenRouterMessage[] = [];
 
