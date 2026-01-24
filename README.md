@@ -405,10 +405,10 @@ Need help? Have questions?
 - [x] MCQ testing system
 - [x] Admin dashboard
 - [x] Bulk upload functionality
-- [ ] AI exam generation
-- [ ] Student progress analytics
+- [x] AI exam generation
+- [x] Student progress analytics
 - [ ] Mobile application
-- [ ] Video lecture integration
+- [x] Video lecture integration
 - [ ] Live chat support
 - [ ] Gamification features
 - [ ] Certificate generation
