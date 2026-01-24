@@ -409,17 +409,10 @@ Need help? Have questions?
 - [x] MCQ testing system
 - [x] Admin dashboard
 - [x] Bulk upload functionality
-<<<<<<< HEAD
 - [x] AI exam generation
 - [x] Student progress analytics
 - [ ] Mobile application
 - [x] Video lecture integration
-=======
-- [ ] AI exam generation
-- [ ] Student progress analytics
-- [ ] Mobile application
-- [ ] Video lecture integration
->>>>>>> 3c6113515ee4b6e33374cf1886e6fddccc24fc21
 - [ ] Live chat support
 - [ ] Gamification features
 - [ ] Certificate generation
@@ -432,12 +425,7 @@ Need help? Have questions?
 
 Made with ❤️ by Muhammad Umer
 
-<<<<<<< HEAD
-[![GitHub stars](https://img.shields.io/github/stars/Looka708/passion-academia?style=social)](https://github.com/Looka708/passion-academia/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/Looka708/passion-academia?style=social)](https://github.com/Looka708/passion-academia/network/members)
-=======
 [![GitHub stars]([https://img.shields.io/github/stars/Looka708/orchids-passion._.academia-main](https://github.com/Looka708/orchids-passion._.academia-main)?style=social)](https://github.com/Looka708/orchids-passion._.academia-main/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/Looka708/orchids-passion._.academia-main?style=social)](https://github.com/Looka708/orchids-passion._.academia-main/network/members)
->>>>>>> 3c6113515ee4b6e33374cf1886e6fddccc24fc21
 
 </div>
