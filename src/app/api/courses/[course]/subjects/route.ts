@@ -1,6 +1,7 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/client';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
     request: NextRequest,
@@ -28,15 +29,15 @@ export async function GET(
             .ilike('course_type', course);
 
         // 3. Combine and Deduplicate
-        const managedSubjects = subjectData?.map(s => s.subject_name) || [];
-        const mcqSubjects = mcqData?.map(m => m.subject) || [];
+        const managedSubjects = subjectData?.map((s: any) => s.subject_name) || [];
+        const mcqSubjects = mcqData?.map((m: any) => m.subject) || [];
 
         // Case-insensitive deduplication, preferring the display case from 'subjects' table
         const uniqueSubjectsSet = new Set<string>();
         const finalSubjects: string[] = [];
 
         // Add managed subjects first (they have the preferred casing)
-        managedSubjects.forEach(s => {
+        managedSubjects.forEach((s: any) => {
             const lower = s.toLowerCase();
             if (!uniqueSubjectsSet.has(lower)) {
                 uniqueSubjectsSet.add(lower);
@@ -45,7 +46,7 @@ export async function GET(
         });
 
         // Add remaining MCQ subjects
-        mcqSubjects.forEach(s => {
+        mcqSubjects.forEach((s: any) => {
             const lower = s.toLowerCase();
             if (!uniqueSubjectsSet.has(lower)) {
                 uniqueSubjectsSet.add(lower);

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/client';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const courseType = searchParams.get('course_type');
@@ -14,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = createServerClient();
-    
+
     let query = supabase
       .from('mcqs')
       .select('*')

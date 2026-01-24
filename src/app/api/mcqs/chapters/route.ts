@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/client';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const courseType = searchParams.get('course_type');
@@ -12,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = createServerClient();
-    
+
     const { data, error } = await supabase
       .from('mcqs')
       .select('chapter')
@@ -23,7 +25,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
-    const uniqueChapters = [...new Set(data?.map(d => d.chapter))].sort();
+    const uniqueChapters = [...new Set(data?.map((d: any) => d.chapter))].sort();
 
     return NextResponse.json({ success: true, chapters: uniqueChapters });
   } catch (error) {

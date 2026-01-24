@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/client';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const supabase = createServerClient();
@@ -8,7 +10,7 @@ export async function GET() {
     const { data: stats, error: statsError } = await supabase
       .from('mcqs')
       .select('course_type, subject')
-      .then(({ data, error }) => {
+      .then(({ data, error }: { data: any[] | null, error: any }) => {
         if (error) return { data: null, error };
         if (!data) return { data: [], error: null };
 

@@ -1,6 +1,8 @@
 import { createServerClient } from '@/lib/supabase/client';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     const supabase = createServerClient();
     const { data } = await supabase
@@ -9,7 +11,7 @@ export async function GET() {
         .eq('subject', 'biology');
 
     const results: any = {};
-    data?.forEach(row => {
+    data?.forEach((row: any) => {
         const key = row.course_type;
         results[key] = (results[key] || 0) + 1;
     });

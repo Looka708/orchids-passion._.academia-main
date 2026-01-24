@@ -1,6 +1,7 @@
-
 import { createServerClient } from '@/lib/supabase/client';
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
     const supabase = createServerClient();
@@ -15,7 +16,7 @@ export async function GET() {
         if (error) throw error;
 
         // Count occurrences
-        data.forEach(row => {
+        data.forEach((row: any) => {
             const key = `${row.course_type} | ${row.subject}`;
             stats[key] = (stats[key] || 0) + 1;
         });

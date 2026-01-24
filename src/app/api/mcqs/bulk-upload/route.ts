@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createServerClient();
-    
+
     const mcqsToInsert: Array<{
       course_type: string;
       subject: string;
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       .eq('subject', subject);
 
     if (existingMcqs) {
-      existingMcqs.forEach((mcq) => {
+      existingMcqs.forEach((mcq: any) => {
         if (!chapterCounts[mcq.chapter] || mcq.question_number > chapterCounts[mcq.chapter]) {
           chapterCounts[mcq.chapter] = mcq.question_number;
         }
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     for (let i = 0; i < mcqsToInsert.length; i += batchSize) {
       const batch = mcqsToInsert.slice(i, i + batchSize);
       const { error } = await supabase.from('mcqs').insert(batch);
-      
+
       if (error) {
         insertErrors.push(`Batch ${Math.floor(i / batchSize) + 1}: ${error.message}`);
       } else {

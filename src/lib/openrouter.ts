@@ -41,8 +41,8 @@ export class OpenRouterClient {
         this.apiKey = apiKey || process.env.OPENROUTER_API_KEY || '';
         this.defaultModel = model || process.env.OPENROUTER_MODEL || 'openai/gpt-oss-120b:free';
 
-        if (!this.apiKey) {
-            throw new Error('OpenRouter API key is required');
+        if (!this.apiKey && process.env.NODE_ENV === 'development') {
+            console.warn('OpenRouter API key is missing. AI features will not work.');
         }
     }
 
@@ -58,6 +58,9 @@ export class OpenRouterClient {
             model?: string;
         }
     ): Promise<string> {
+        if (!this.apiKey) {
+            throw new Error('OpenRouter API key is required but was not provided.');
+        }
         const messages: OpenRouterMessage[] = [];
 
         if (systemPrompt) {

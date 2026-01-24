@@ -1,6 +1,7 @@
-
 import { createServerClient } from '@/lib/supabase/client';
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
     const supabase = createServerClient();
@@ -12,7 +13,7 @@ export async function GET() {
         .eq('subject', 'biology');
 
     const counts: Record<string, number> = {};
-    data?.forEach(row => {
+    data?.forEach((row: any) => {
         const key = `${row.chapter} | ${row.question_number}`;
         counts[key] = (counts[key] || 0) + 1;
     });
@@ -21,6 +22,6 @@ export async function GET() {
 
     return NextResponse.json({
         total: data?.length,
-        duplicates: duplicates.map(([key, count]) => ({ key, count }))
+        duplicates: duplicates.map(([key, count]: [string, number]) => ({ key, count }))
     });
 }

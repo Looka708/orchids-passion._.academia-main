@@ -1,6 +1,7 @@
-
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/client';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
     const supabase = createServerClient();
@@ -32,7 +33,7 @@ export async function GET() {
 
         const summary: Record<string, Record<string, number>> = {};
 
-        allData.forEach(row => {
+        allData.forEach((row: any) => {
             if (!summary[row.course_type]) summary[row.course_type] = {};
             summary[row.course_type][row.subject] = (summary[row.course_type][row.subject] || 0) + 1;
         });

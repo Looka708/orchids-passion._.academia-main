@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/client';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -9,7 +11,7 @@ export async function GET(
 
   try {
     const supabase = createServerClient();
-    
+
     const { data, error } = await supabase
       .from('mcqs')
       .select('*')
@@ -37,7 +39,7 @@ export async function PUT(
     const { question_text, options, correct_answer, chapter, language } = body;
 
     const supabase = createServerClient();
-    
+
     const { data, error } = await supabase
       .from('mcqs')
       .update({
@@ -70,7 +72,7 @@ export async function DELETE(
 
   try {
     const supabase = createServerClient();
-    
+
     const { error } = await supabase
       .from('mcqs')
       .delete()
