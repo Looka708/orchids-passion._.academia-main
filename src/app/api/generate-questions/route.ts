@@ -56,7 +56,7 @@ IMPORTANT:
                 'X-Title': 'Passion Academia Exam Generator',
             },
             body: JSON.stringify({
-                model: process.env.OPENROUTER_MODEL || 'openai/gpt-oss-120b:free',
+                model: process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-lite-preview-02-05:free',
                 messages: [
                     {
                         role: 'system',
