@@ -56,7 +56,7 @@ IMPORTANT:
                 'X-Title': 'Passion Academia Exam Generator',
             },
             body: JSON.stringify({
-                model: 'meta-llama/llama-3.3-70b-instruct:free',
+                model: process.env.OPENROUTER_MODEL || 'openai/gpt-oss-120b:free',
                 messages: [
                     {
                         role: 'system',
@@ -68,7 +68,7 @@ IMPORTANT:
                     }
                 ],
                 temperature: 0.7,
-                max_tokens: 4000, // Meta Llama 3.3 70B free tier
+                max_tokens: 8000, // Increased for larger exams
             }),
         });
 

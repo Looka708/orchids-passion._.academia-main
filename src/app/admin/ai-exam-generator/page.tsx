@@ -54,9 +54,9 @@ export default function AIExamGeneratorPage() {
         loadStructure();
     }, []);
 
-    const [numMcqs, setNumMcqs] = useState(15);
-    const [numShortQuestions, setNumShortQuestions] = useState(8);
-    const [numLongQuestions, setNumLongQuestions] = useState(4);
+    const [numMcqs, setNumMcqs] = useState(30);
+    const [numShortQuestions, setNumShortQuestions] = useState(15);
+    const [numLongQuestions, setNumLongQuestions] = useState(10);
     const [customLongQuestions, setCustomLongQuestions] = useState("");
 
     const [examTitle, setExamTitle] = useState("");
@@ -200,10 +200,6 @@ export default function AIExamGeneratorPage() {
     const handleDownloadPDF = () => {
         window.print();
     };
-
-    const subjectChapters = selectedCourse && courses[selectedCourse as CourseName].subjects[selectedSubject]
-        ? (courses[selectedCourse as CourseName].subjects[selectedSubject] as Subject).chapters
-        : [];
 
     const currentDate = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
@@ -369,12 +365,12 @@ export default function AIExamGeneratorPage() {
                                         id="num-mcqs"
                                         type="number"
                                         min={0}
-                                        max={30}
+                                        max={100}
                                         value={numMcqs}
                                         onChange={(e) => setNumMcqs(parseInt(e.target.value) || 0)}
                                         disabled={selectedChapters.length === 0}
                                     />
-                                    <p className="text-xs text-muted-foreground">AI will generate fresh MCQs</p>
+                                    <p className="text-xs text-muted-foreground">Max 100 MCQs - AI will generate fresh questions</p>
                                 </div>
 
                                 <div className="space-y-2">
@@ -383,12 +379,12 @@ export default function AIExamGeneratorPage() {
                                         id="num-short-questions"
                                         type="number"
                                         min={0}
-                                        max={15}
+                                        max={50}
                                         value={numShortQuestions}
                                         onChange={(e) => setNumShortQuestions(parseInt(e.target.value) || 0)}
                                         disabled={selectedChapters.length === 0}
                                     />
-                                    <p className="text-xs text-muted-foreground">AI will generate fresh questions</p>
+                                    <p className="text-xs text-muted-foreground">Max 50 questions - AI will generate fresh questions</p>
                                 </div>
 
                                 <div className="space-y-2">
@@ -397,12 +393,12 @@ export default function AIExamGeneratorPage() {
                                         id="num-long-questions"
                                         type="number"
                                         min={0}
-                                        max={8}
+                                        max={20}
                                         value={numLongQuestions}
                                         onChange={(e) => setNumLongQuestions(parseInt(e.target.value) || 0)}
                                         disabled={selectedChapters.length === 0}
                                     />
-                                    <p className="text-xs text-muted-foreground">AI will generate fresh questions</p>
+                                    <p className="text-xs text-muted-foreground">Max 20 questions - AI will generate fresh questions</p>
                                 </div>
                             </div>
 
