@@ -986,9 +986,9 @@ function MCQAdminContent() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">
-                          {COURSE_ICONS[selectedCourse] || "📚"}
+                          {(selectedCourse && COURSE_ICONS[selectedCourse]) || "📚"}
                         </span>
-                        {COURSE_LABELS[selectedCourse] || selectedCourse} -{" "}
+                        {(selectedCourse && COURSE_LABELS[selectedCourse]) || selectedCourse} -{" "}
                         <span className="capitalize">
                           {selectedSubject.replace("-", " ")}
                         </span>

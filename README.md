@@ -373,11 +373,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Muhammad Umer**
 
 - GitHub: [@Looka708](https://github.com/Looka708)
-<<<<<<< HEAD
-- Email: [your-email@example.com](mailto:your-email@example.com)
-=======
 - Email: [m.umer.looka@gmail.com](mailto:m.umer.looka@gmail.com)
->>>>>>> 3c6113515ee4b6e33374cf1886e6fddccc24fc21
 
 ---
 

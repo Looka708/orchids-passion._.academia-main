@@ -15,7 +15,7 @@ export async function POST() {
         const results: any = {};
 
         for (const table of tables) {
-            const { errorCount, error } = await supabase
+            const { error } = await supabase
                 .from(table)
                 .delete()
                 .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete everything
