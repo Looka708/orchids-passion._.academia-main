@@ -7,7 +7,8 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ course: string; subject: string }> }
 ) {
-    const { course, subject } = await params;
+    let { course, subject } = await params;
+    subject = subject.replace(/-/g, ' ');
 
     if (!course || !subject) {
         return NextResponse.json({ success: false, error: 'course and subject are required' }, { status: 400 });

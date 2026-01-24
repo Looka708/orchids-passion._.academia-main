@@ -6,9 +6,13 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const courseType = searchParams.get('course_type');
-  const subject = searchParams.get('subject');
+  let subject = searchParams.get('subject');
   const chapter = searchParams.get('chapter');
   const search = searchParams.get('search');
+
+  if (subject) {
+    subject = decodeURIComponent(subject).replace(/-/g, ' ');
+  }
 
   if (!courseType || !subject) {
     return NextResponse.json({ success: false, error: 'course_type and subject are required' }, { status: 400 });

@@ -26,8 +26,8 @@ export default function DynamicChapterPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const courseType = `class-${grade}`;
-    const subjectDisplay = subjectSlug.charAt(0).toUpperCase() + subjectSlug.slice(1);
+    const courseType = /^\d+$/.test(grade) ? `class-${grade}` : grade;
+    const subjectDisplay = subjectSlug.charAt(0).toUpperCase() + subjectSlug.slice(1).replace(/-/g, ' ');
 
     useEffect(() => {
         const fetchChapterData = async () => {

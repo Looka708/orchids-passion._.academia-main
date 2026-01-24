@@ -26,7 +26,7 @@ export default function SubjectChaptersPage() {
     const [error, setError] = useState<string | null>(null);
 
     const courseType = /^\d+$/.test(grade) ? `class-${grade}` : grade;
-    const subjectName = subjectSlug.charAt(0).toUpperCase() + subjectSlug.slice(1);
+    const subjectName = subjectSlug.charAt(0).toUpperCase() + subjectSlug.slice(1).replace(/-/g, ' ');
 
     useEffect(() => {
         const fetchChapters = async () => {

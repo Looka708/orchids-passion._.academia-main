@@ -106,7 +106,7 @@ export default function DynamicGradePage() {
                                         </CardContent>
                                         <CardFooter>
                                             <Button asChild className="w-full transition-transform duration-300 hover:scale-105">
-                                                <Link href={`/classes/${grade}/${subject.toLowerCase()}`}>
+                                                <Link href={`/classes/${grade}/${subject.toLowerCase().replace(/ /g, '-')}`}>
                                                     View Chapters <ArrowRight className="ml-2 h-4 w-4" />
                                                 </Link>
                                             </Button>
