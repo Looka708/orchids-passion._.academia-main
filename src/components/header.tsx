@@ -49,8 +49,21 @@ export default function Header() {
   const { isAuthenticated, logout, user, firebaseUser } = useAuth();
   const [streak, setStreak] = useState<number>(0);
   const [quizModalOpen, setQuizModalOpen] = useState(false);
-  const [specialLinks, setSpecialLinks] = useState<ClassLink[]>([]);
-  const [academicLinks, setAcademicLinks] = useState<ClassLink[]>([]);
+  const [specialLinks, setSpecialLinks] = useState<ClassLink[]>([
+    { href: "/afns", label: "AFNS", category: "special" },
+    { href: "/paf", label: "PAF", category: "special" },
+    { href: "/mcj", label: "MCJ", category: "special" },
+    { href: "/mcm", label: "MCM", category: "special" },
+  ]);
+  const [academicLinks, setAcademicLinks] = useState<ClassLink[]>([
+    { href: "/classes/class-6", label: "Class 6", category: "academic" },
+    { href: "/classes/class-7", label: "Class 7", category: "academic" },
+    { href: "/classes/class-8", label: "Class 8", category: "academic" },
+    { href: "/classes/class-9", label: "Class 9", category: "academic" },
+    { href: "/classes/class-10", label: "Class 10", category: "academic" },
+    { href: "/classes/class-11", label: "Class 11", category: "academic" },
+    { href: "/classes/class-12", label: "Class 12", category: "academic" },
+  ]);
 
   // Fetch classes from API
   useEffect(() => {
@@ -59,14 +72,32 @@ export default function Header() {
         const response = await fetch("/api/classes");
         const data = await response.json();
         if (data.success && data.data) {
-          const links = data.data.map((cls: any) => ({
+          const fetchedLinks = data.data.map((cls: any) => ({
             href: cls.category === 'special' ? `/${cls.slug}` : `/classes/${cls.slug}`,
             label: cls.name,
             category: cls.category
           }));
 
-          setSpecialLinks(links.filter((l: ClassLink) => l.category === 'special'));
-          setAcademicLinks(links.filter((l: ClassLink) => l.category === 'academic'));
+          // Merge fetched links with defaults, avoiding duplicates by href
+          setSpecialLinks(prev => {
+            const combined = [...prev];
+            fetchedLinks.filter((l: any) => l.category === 'special').forEach((link: any) => {
+              if (!combined.some(c => c.href === link.href)) {
+                combined.push(link);
+              }
+            });
+            return combined;
+          });
+
+          setAcademicLinks(prev => {
+            const combined = [...prev];
+            fetchedLinks.filter((l: any) => l.category === 'academic').forEach((link: any) => {
+              if (!combined.some(c => c.href === link.href)) {
+                combined.push(link);
+              }
+            });
+            return combined;
+          });
         }
       } catch (error) {
         console.error("Error fetching classes for header:", error);

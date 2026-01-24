@@ -22,7 +22,6 @@ type GeneratedExam = {
   longQuestions: string[];
 };
 
-const COURES_LIST = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "AFNS", "PAF", "MCJ", "MCM"];
 const SUBJECTS_BY_COURSE: Record<string, string[]> = {
   "Class 6": ["Computer", "English", "General Science", "Mathematics", "Urdu"],
   "Class 7": ["Computer", "English", "General Science", "Mathematics", "Urdu"],
@@ -39,6 +38,26 @@ const SUBJECTS_BY_COURSE: Record<string, string[]> = {
 
 export default function ExamGeneratorPage() {
   const { toast } = useToast();
+  const [coursesList, setCoursesList] = useState<string[]>(["Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "AFNS", "PAF", "MCJ", "MCM"]);
+
+  // Fetch dynamic classes
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const res = await fetch('/api/classes');
+        const data = await res.json();
+        if (data.success && data.data) {
+          const names = data.data.map((c: any) => c.name);
+          // Combine with defaults and remove duplicates
+          const combined = Array.from(new Set([...coursesList, ...names]));
+          setCoursesList(combined);
+        }
+      } catch (err) {
+        console.error("Error fetching classes for exam generator:", err);
+      }
+    };
+    fetchClasses();
+  }, []);
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [availableChapters, setAvailableChapters] = useState<string[]>([]);
@@ -63,6 +82,37 @@ export default function ExamGeneratorPage() {
   const [showAnswerKey, setShowAnswerKey] = useState(false);
 
   const [generatedExam, setGeneratedExam] = useState<GeneratedExam | null>(null);
+
+  const [dynamicSubjects, setDynamicSubjects] = useState<string[]>([]);
+
+  // Fetch subjects when course changes
+  useEffect(() => {
+    if (selectedCourse) {
+      const fetchSubjects = async () => {
+        try {
+          // Check both name and slug for the course type
+          const courseType = selectedCourse.toLowerCase().replace(/\s+/g, '-');
+          const res = await fetch(`/api/subjects?course_type=${courseType}`);
+          const data = await res.json();
+          if (data.success && data.data) {
+            const names = data.data.map((s: any) => s.subject_name.charAt(0).toUpperCase() + s.subject_name.slice(1).toLowerCase());
+            // Combine with hardcoded ones and remove duplicates
+            const hardcoded = SUBJECTS_BY_COURSE[selectedCourse] || [];
+            const combined = Array.from(new Set([...hardcoded, ...names]));
+            setDynamicSubjects(combined);
+          } else {
+            setDynamicSubjects(SUBJECTS_BY_COURSE[selectedCourse] || []);
+          }
+        } catch (err) {
+          console.error("Error fetching subjects:", err);
+          setDynamicSubjects(SUBJECTS_BY_COURSE[selectedCourse] || []);
+        }
+      };
+      fetchSubjects();
+    } else {
+      setDynamicSubjects([]);
+    }
+  }, [selectedCourse]);
 
   // Fetch chapters when course or subject changes
   useEffect(() => {
@@ -199,7 +249,7 @@ export default function ExamGeneratorPage() {
                   <Select onValueChange={setSelectedCourse} value={selectedCourse}>
                     <SelectTrigger><SelectValue placeholder="Select a Course" /></SelectTrigger>
                     <SelectContent>
-                      {COURES_LIST.map(course => <SelectItem key={course} value={course}>{course}</SelectItem>)}
+                      {coursesList.map((course: string) => <SelectItem key={course} value={course}>{course}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -208,7 +258,7 @@ export default function ExamGeneratorPage() {
                   <Select onValueChange={setSelectedSubject} value={selectedSubject} disabled={!selectedCourse}>
                     <SelectTrigger><SelectValue placeholder="Select a Subject" /></SelectTrigger>
                     <SelectContent>
-                      {(SUBJECTS_BY_COURSE[selectedCourse] || []).map(subject => <SelectItem key={subject} value={subject}>{subject}</SelectItem>)}
+                      {dynamicSubjects.map(subject => <SelectItem key={subject} value={subject}>{subject}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>

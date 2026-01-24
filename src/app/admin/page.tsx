@@ -159,7 +159,7 @@ export default function AdminPage() {
         }
     };
 
-    const loadMcqStats = async () => {
+    const loadMcqStats = async (classesOverride?: ClassRecord[]) => {
         setMcqLoading(true);
         try {
             const response = await fetch("/api/mcqs/structure");
@@ -173,9 +173,10 @@ export default function AdminPage() {
 
                 // Combine with existing classes to show those with 0 MCQs
                 const finalStats: MCQStats[] = [...stats];
+                const classesToUse = classesOverride || classes;
 
                 // Add classes that aren't in stats yet
-                classes.forEach(cls => {
+                classesToUse.forEach(cls => {
                     if (!finalStats.find(s => s.course_type === cls.slug)) {
                         finalStats.push({
                             course_type: cls.slug,
@@ -220,7 +221,23 @@ export default function AdminPage() {
             const data = await response.json();
             if (data.success) {
                 toast({ title: "Class Created", description: `Successfully created ${newClassName}.` });
-                setClasses(prev => [...prev, data.data].sort((a, b) => a.display_order - b.display_order));
+
+                // Update labels and icons cache immediately
+                COURSE_LABELS[data.data.slug] = data.data.name;
+                const iconMap: Record<string, string> = {
+                    'GraduationCap': '🎓',
+                    'Plane': '✈️',
+                    'FlaskConical': '🧪',
+                    'ShieldCheck': '🛡️',
+                };
+                COURSE_ICONS[data.data.slug] = iconMap[data.data.icon] || '📚';
+
+                const updatedClasses = [...classes, data.data].sort((a, b) => a.display_order - b.display_order);
+                setClasses(updatedClasses);
+
+                // Refresh MCQ stats to show this new class with 0 count
+                loadMcqStats(updatedClasses);
+
                 setNewClassName('');
                 setNewClassSlug('');
                 setNewClassDesc('');
@@ -446,7 +463,21 @@ export default function AdminPage() {
                                             <SelectValue placeholder="Select a course to assign" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {courseCategories.map(course => <SelectItem key={course} value={course}>{course}</SelectItem>)}
+                                            {/* Show all dynamic classes from database */}
+                                            {classes.map(cls => (
+                                                <SelectItem key={cls.slug} value={cls.slug}>
+                                                    {cls.name}
+                                                </SelectItem>
+                                            ))}
+                                            {/* Also show default categories if they aren't already in the classes list */}
+                                            {courseCategories
+                                                .filter(cat => !classes.some(cls => cls.slug === cat.toLowerCase() || cls.name === cat))
+                                                .map(course => (
+                                                    <SelectItem key={course} value={course.toLowerCase() === 'classes' ? 'classes' : course.toLowerCase()}>
+                                                        {course}
+                                                    </SelectItem>
+                                                ))
+                                            }
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -779,7 +810,7 @@ export default function AdminPage() {
                                         <Database className="mr-2 h-4 w-4" />
                                         {totalMcqs.toLocaleString()} Total
                                     </Badge>
-                                    <Button variant="ghost" size="icon" onClick={loadMcqStats} disabled={mcqLoading}>
+                                    <Button variant="ghost" size="icon" onClick={() => loadMcqStats()} disabled={mcqLoading}>
                                         <RefreshCw className={cn("h-4 w-4", mcqLoading && "animate-spin")} />
                                     </Button>
                                 </div>
