@@ -74,9 +74,19 @@ IMPORTANT:
 
         if (!response.ok) {
             const errorData = await response.text();
-            console.error('OpenRouter API error:', errorData);
+            console.error('OpenRouter API error:');
+            console.error('Status:', response.status, response.statusText);
+            console.error('Response:', errorData);
+            console.error('API Key exists:', !!apiKey);
+            console.error('Model:', process.env.OPENROUTER_MODEL || 'openai/gpt-oss-120b:free');
+
             return NextResponse.json(
-                { error: 'Failed to generate questions', details: errorData },
+                {
+                    error: 'Failed to generate questions',
+                    details: errorData,
+                    status: response.status,
+                    statusText: response.statusText
+                },
                 { status: response.status }
             );
         }

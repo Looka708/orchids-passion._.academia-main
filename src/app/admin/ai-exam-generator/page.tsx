@@ -1,3 +1,4 @@
+"use client";
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -122,7 +123,15 @@ export default function AIExamGeneratorPage() {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || 'Failed to generate questions');
+                console.error('API Error Response:', error);
+                console.error('Status:', error.status, error.statusText);
+                console.error('Details:', error.details);
+
+                throw new Error(
+                    error.details
+                        ? `${error.error}: ${error.details}`
+                        : error.error || 'Failed to generate questions'
+                );
             }
 
             const data = await response.json();
@@ -161,10 +170,14 @@ export default function AIExamGeneratorPage() {
             });
         } catch (error: any) {
             console.error('Error generating with AI:', error);
+            console.error('Error message:', error.message);
+            console.error('Full error:', JSON.stringify(error, null, 2));
+
             toast({
                 variant: "destructive",
                 title: "Generation Failed",
-                description: error.message || "Failed to generate questions with AI. Please try again.",
+                description: error.message || "Failed to generate questions with AI. Please check the console for details.",
+                duration: 10000, // Show for 10 seconds
             });
         } finally {
             setIsGeneratingAI(false);
