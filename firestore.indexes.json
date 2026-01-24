@@ -1,0 +1,19 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "progress",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+                {
+                    "fieldPath": "totalXP",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "totalXP",
+                    "order": "DESCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}
