@@ -39,7 +39,7 @@ export class OpenRouterClient {
 
     constructor(apiKey?: string, model?: string) {
         this.apiKey = apiKey || process.env.OPENROUTER_API_KEY || '';
-        this.defaultModel = model || process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-lite-preview-02-05:free';
+        this.defaultModel = model || process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
 
         if (!this.apiKey && process.env.NODE_ENV === 'development') {
             console.warn('OpenRouter API key is missing. AI features will not work.');
