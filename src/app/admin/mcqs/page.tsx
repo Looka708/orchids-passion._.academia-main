@@ -179,7 +179,7 @@ function MCQAdminContent() {
   const [mcqs, setMcqs] = useState<MCQRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
-  const [availableCourseTypes, setAvailableCourseTypes] = useState<string[]>(DEFAULT_COURSE_TYPES);
+  const [availableCourseTypes, setAvailableCourseTypes] = useState<string[]>([]);
   const [selectedMcqs, setSelectedMcqs] = useState<Set<string>>(new Set());
 
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
@@ -241,8 +241,7 @@ function MCQAdminContent() {
       const data = await response.json();
       if (data.success && data.data) {
         const classSlugs = data.data.map((cls: any) => cls.slug);
-        const allCourseTypes = Array.from(new Set([...DEFAULT_COURSE_TYPES, ...classSlugs]));
-        setAvailableCourseTypes(allCourseTypes);
+        setAvailableCourseTypes(classSlugs);
 
         // Update labels and icons
         data.data.forEach((cls: any) => {
@@ -281,8 +280,7 @@ function MCQAdminContent() {
         // Get slugs from classes table
         const classSlugs = data.data.map((cls: any) => cls.slug);
         // Combine with default course types and remove duplicates
-        const allCourseTypes = Array.from(new Set([...DEFAULT_COURSE_TYPES, ...classSlugs]));
-        setAvailableCourseTypes(allCourseTypes);
+        setAvailableCourseTypes(classSlugs);
 
         // Update COURSE_LABELS and COURSE_ICONS dynamically
         data.data.forEach((cls: any) => {
