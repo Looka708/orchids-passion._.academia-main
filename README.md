@@ -421,7 +421,7 @@ Need help? Have questions?
 
 Made with ❤️ by Muhammad Umer
 
-[![GitHub stars](https://img.shields.io/github/stars/Looka708/passion-academia?style=social)](https://github.com/Looka708/passion-academia/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/Looka708/passion-academia?style=social)](https://github.com/Looka708/passion-academia/network/members)
+[![GitHub stars]([https://img.shields.io/github/stars/Looka708/orchids-passion._.academia-main](https://github.com/Looka708/orchids-passion._.academia-main)?style=social)](https://github.com/Looka708/orchids-passion._.academia-main/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/Looka708/orchids-passion._.academia-main?style=social)](https://github.com/Looka708/orchids-passion._.academia-main/network/members)
 
 </div>
