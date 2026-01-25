@@ -83,7 +83,11 @@ export class OpenRouterClient {
             max_tokens: options?.max_tokens ?? 2000,
         };
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
         try {
+            console.log(`[OpenRouter] Requesting ${requestBody.model}...`);
             const response = await fetch(`${this.baseUrl}/chat/completions`, {
                 method: 'POST',
                 headers: {
@@ -93,13 +97,16 @@ export class OpenRouterClient {
                     'X-Title': 'Passion Academia',
                 },
                 body: JSON.stringify(requestBody),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+                console.error(`[OpenRouter] HTTP ${response.status}:`, errorData);
                 throw new Error(
-                    `OpenRouter API error: ${response.status} ${response.statusText}. ${errorData.error?.message || ''
-                    }`
+                    `OpenRouter API error: ${response.status} ${response.statusText}. ${errorData.error?.message || ''}`
                 );
             }
 
@@ -110,8 +117,13 @@ export class OpenRouterClient {
             }
 
             return data.choices[0].message.content;
-        } catch (error) {
-            console.error('OpenRouter API Error:', error);
+        } catch (error: any) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                console.error('[OpenRouter] Request timed out after 60s');
+                throw new Error('Request timed out. The AI model is taking too long to respond.');
+            }
+            console.error('[OpenRouter] API Error:', error);
             throw error;
         }
     }

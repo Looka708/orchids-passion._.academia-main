@@ -133,11 +133,33 @@ If the user asks about technical issues, academic content, or platform features,
 Be polite and encouraging. 
 Always refer to yourself as "Passion Support Bot".`;
 
-        const response = await openRouterClient.generateCompletion(message, systemPrompt, {
-            model: "deepseek/deepseek-r1:free",
-            temperature: 0.7,
-            max_tokens: 1000
-        });
+        // Fallback sequence for best reliability
+        const models = [
+            "deepseek/deepseek-r1:free",
+            "google/gemini-2.0-flash-exp:free",
+            "meta-llama/llama-3.3-70b-instruct:free"
+        ];
+
+        let response = "";
+        let lastError = null;
+
+        for (const model of models) {
+            try {
+                response = await openRouterClient.generateCompletion(message, systemPrompt, {
+                    model: model,
+                    temperature: 0.7,
+                    max_tokens: 1000
+                });
+                if (response && !response.includes("API key is missing")) break;
+            } catch (err) {
+                lastError = err;
+                continue;
+            }
+        }
+
+        if (!response || response.includes("API key is missing")) {
+            throw new Error("AI Service Unavailable");
+        }
 
         return { success: true, text: response };
     } catch (error: any) {

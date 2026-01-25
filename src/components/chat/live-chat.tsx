@@ -37,6 +37,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { format } from "date-fns"
+import { useToast } from "@/hooks/use-toast"
 
 interface Message {
     id: string
@@ -60,6 +61,7 @@ export default function LiveChat() {
     const [uploadProgress, setUploadProgress] = useState(0)
     const scrollRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const { toast } = useToast()
 
     const [chatId, setChatId] = useState<string>("anonymous_guest")
 
@@ -157,9 +159,20 @@ export default function LiveChat() {
                     lastMessage: aiResult.text,
                     lastTimestamp: serverTimestamp(),
                 }, { merge: true })
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Support System Busy",
+                    description: aiResult.error || "The AI is currently unavailable. Please try again in a moment.",
+                })
             }
         } catch (error) {
             console.error("Error sending message:", error)
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to send message. Please check your connection.",
+            })
         } finally {
             setIsTyping(false)
         }
