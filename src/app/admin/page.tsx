@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge";
 
-import { Trash2, Database, BookOpen, RefreshCw, ExternalLink, Users, UserPlus, FileText, Plus, GraduationCap, Plane, FlaskConical, ShieldCheck, Settings, LayoutGrid } from "lucide-react";
+import { Trash2, Database, BookOpen, RefreshCw, ExternalLink, Users, UserPlus, FileText, Plus, GraduationCap, Plane, FlaskConical, ShieldCheck, Settings, LayoutGrid, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { addUserToSheet, fetchUsers, toggleUserStatus, deleteUserFromSheet } from "@/app/actions";
@@ -450,7 +450,7 @@ export default function AdminPage() {
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="new-user-email">Email</Label>
-                                    <Input id="new-user-email" type="email" placeholder="e.g., john.doe@example.com" value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} required />
+                                    <Input id="new-user-email" type="email" placeholder="e.g., john.doe@gmail.com" value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} required />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="new-user-password">Password</Label>
@@ -797,21 +797,30 @@ export default function AdminPage() {
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <CardTitle className="flex items-center gap-2">
+                                    <CardTitle className="flex items-center gap-2 text-xl">
                                         <Database className="h-5 w-5 text-indigo-500" />
-                                        MCQs Management
+                                        Database Stats
                                     </CardTitle>
                                     <CardDescription>
                                         Overview of all MCQs in the database by course
                                     </CardDescription>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <Badge variant="secondary" className="text-base px-3 py-1.5 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900">
-                                        <Database className="mr-2 h-4 w-4" />
-                                        {totalMcqs.toLocaleString()} Total
-                                    </Badge>
-                                    <Button variant="ghost" size="icon" onClick={() => loadMcqStats()} disabled={mcqLoading}>
+                                <div className="flex gap-2">
+                                    <Link href="/admin/chats">
+                                        <Button variant="outline" size="sm" className="gap-2">
+                                            <MessageSquare className="h-4 w-4" />
+                                            Support Chats
+                                        </Button>
+                                    </Link>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => loadMcqStats()}
+                                        disabled={mcqLoading}
+                                        className="gap-2"
+                                    >
                                         <RefreshCw className={cn("h-4 w-4", mcqLoading && "animate-spin")} />
+                                        Refresh Stats
                                     </Button>
                                 </div>
                             </div>

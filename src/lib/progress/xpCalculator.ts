@@ -1,13 +1,13 @@
 // XP Calculation Rules
 export const XP_RULES = {
-    CORRECT_ANSWER: 10,
+    CORRECT_ANSWER: 1,      // From 10
     WRONG_ANSWER: 0,
-    PERFECT_QUIZ: 50,
-    DAILY_STREAK: 5,
-    COMPLETE_CHAPTER: 100,
-    STUDY_SESSION_30MIN: 25,
-    FIRST_PERFECT_SCORE: 200,
-    QUIZ_COMPLETION: 20
+    PERFECT_QUIZ: 2,       // From 50
+    DAILY_STREAK: 1,       // From 5
+    COMPLETE_CHAPTER: 5,   // From 100
+    STUDY_SESSION_30MIN: 2, // From 25
+    FIRST_PERFECT_SCORE: 10, // From 200
+    QUIZ_COMPLETION: 2      // From 20
 };
 
 // Calculate XP for answering a question

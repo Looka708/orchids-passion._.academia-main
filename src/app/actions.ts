@@ -5,6 +5,10 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
 import { toggleUserActiveStatus, getAllUsers, deleteUser, getUserByEmail, setUserData } from '@/lib/users';
 import type { User } from '@/lib/users';
+import { Resend } from 'resend';
+
+
+
 
 export async function verifyUserInSheet(email: string, password: string): Promise<{ success: boolean; course?: string; name?: string; email?: string, role?: 'owner' | 'admin' | 'teacher' | 'user', active?: boolean }> {
     const user = await getUserByEmail(email);
@@ -75,5 +79,46 @@ export async function deleteUserFromSheet(email: string) {
     } catch (error: any) {
         console.error("Error deleting user:", error.message);
         return { success: false, error: "Deletion failed. Note: Full user deletion requires a backend implementation. This action only removed the user from the database." };
+    }
+}
+
+export async function sendVerificationEmail(email: string, name: string, code: string) {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    console.log(`[VERIFICATION] Sending ${code} to ${email}`);
+    if (!process.env.RESEND_API_KEY) {
+        console.error("RESEND_API_KEY is missing from environment variables");
+        return { success: false, error: "Email service configuration missing." };
+    }
+
+    try {
+        const { data, error } = await resend.emails.send({
+            from: 'Passion Academia <verify@passionacademia.ac.pk>',
+            to: email,
+            subject: `${code} is your verification code`,
+            html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <h2 style="color: #4f46e5; text-align: center;">Passion Academia</h2>
+                    <p>Hi ${name},</p>
+                    <p>Welcome to Passion Academia! To complete your registration, please use the following 9-char verification code:</p>
+                    <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                        <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #1e293b;">${code}</span>
+                    </div>
+                    <p style="font-size: 14px; color: #64748b; text-align: center;">This code will expire in 15 minutes.</p>
+                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+                    <p style="font-size: 12px; color: #94a3b8; text-align: center;">If you didn't request this email, you can safely ignore it.</p>
+                </div>
+            `,
+        });
+
+        if (error) {
+            console.error("Resend API Error:", error);
+            return { success: false, error: error.message };
+        }
+
+        console.log("Resend Success:", data);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Critical Email Sending Error:", error);
+        return { success: false, error: error.message };
     }
 }

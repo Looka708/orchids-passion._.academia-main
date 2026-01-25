@@ -16,7 +16,7 @@ import QuickStart from "@/components/dashboard/QuickStart";
 import { useState } from "react";
 
 export default function DashboardPage() {
-    const { isAuthenticated, user, firebaseUser, isLoading: authLoading, refreshUser } = useAuth();
+    const { isAuthenticated, user, firebaseUser, isLoading: authLoading, refreshUser, emailVerified } = useAuth();
     const { progress, loading: progressLoading, refreshProgress } = useProgress();
 
     // Onboarding State - must be declared before any conditional returns
@@ -72,6 +72,19 @@ export default function DashboardPage() {
                 </p>
                 <Button asChild>
                     <Link href="/signin">Sign In</Link>
+                </Button>
+            </div>
+        );
+    }    // Check if email is verified
+    if (!emailVerified) {
+        return (
+            <div className="container mx-auto px-4 py-16 text-center">
+                <h1 className="text-3xl font-bold mb-4">Verification Required</h1>
+                <p className="text-muted-foreground mb-6">
+                    You must verify your account with the 9-digit code sent to your Gmail before accessing the dashboard.
+                </p>
+                <Button asChild>
+                    <Link href="/">Go to Home to Verify</Link>
                 </Button>
             </div>
         );

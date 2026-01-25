@@ -12,13 +12,18 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, adminOnly = false, examGeneratorOnly = false }: ProtectedRouteProps) {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, emailVerified } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated) {
         router.push('/signin');
+      } else if (!emailVerified) {
+        // Force user to home page where the banner is displayed
+        if (window.location.pathname !== '/') {
+          router.push('/');
+        }
       } else if (adminOnly && user?.role !== 'owner' && user?.role !== 'teacher') {
         router.push('/'); // Redirect non-owners/non-teachers from admin routes
       } else if (examGeneratorOnly && user?.role !== 'owner') {

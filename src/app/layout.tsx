@@ -9,6 +9,8 @@ import Footer from '@/components/footer'
 import { AuthProvider } from '@/hooks/useAuth'
 import SafetyShield from '@/components/safety-shield'
 import { ScrollProgress, MovingGreenLine } from '@/components/scroll-progress'
+import LiveChat from '@/components/chat/live-chat'
+import { VerificationBanner } from '@/components/verification-banner'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
@@ -36,21 +38,23 @@ export default function RootLayout({
           notoNastaliqUrdu.variable
         )}
       >
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <AuthProvider>
-              <ScrollProgress />
-              <MovingGreenLine />
-              <SafetyShield />
-              <div className="relative flex min-h-dvh flex-col bg-background">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            <ScrollProgress />
+            <MovingGreenLine />
+            <SafetyShield />
+            <div className="relative flex min-h-dvh flex-col bg-background">
               <Header />
+              <VerificationBanner />
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
+            <LiveChat />
             <Toaster />
           </AuthProvider>
         </ThemeProvider>

@@ -22,6 +22,9 @@ export interface User {
         dailyStudyTime?: number;
     };
     id?: string;
+    isEmailVerified?: boolean;
+    verificationCode?: string | null;
+    verificationCodeExpiry?: number | null;
 }
 
 export async function ensureAdminUserExists() {
