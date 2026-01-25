@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://cdn.jsdelivr.net/gh/Suhail-Abbas/Jameel-Noori-Nastaleeq@latest/Jameel-Noori-Nastaleeq.css');
+
 /* =========================================================
    BASE THEME VARIABLES
    ========================================================= */
@@ -112,13 +114,53 @@ html {
 /* =========================================================
    MCQ / EXAM STRUCTURE
    ========================================================= */
-.question {
-  margin-bottom: 1.5rem;
+/* =========================================================
+   URDU & RTL SUPPORT
+   ========================================================= */
+.font-urdu {
+  font-family: 'Jameel Noori Nastaleeq', var(--font-urdu), serif;
+  line-height: 2.2;
+  font-display: swap;
+}
+
+.rtl-text {
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: plaintext;
 }
 
 .question>p {
   font-weight: 600;
   margin-bottom: 0.5rem;
+}
+
+.question.urdu-question {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Adjust font size globally for Urdu elements to match Latin visual weight */
+.font-urdu {
+  font-size: 1.15em;
+}
+
+/* Fix for overlapping lines in Urdu text */
+p.font-urdu,
+span.font-urdu,
+div.font-urdu,
+li.font-urdu {
+  padding-top: 0.3em;
+  padding-bottom: 0.3em;
+}
+
+.rtl-list {
+  direction: rtl;
+  text-align: right;
+  list-style-position: inside;
+}
+
+.rtl-list li::marker {
+  unicode-bidi: isolate;
 }
 
 .answer-list {

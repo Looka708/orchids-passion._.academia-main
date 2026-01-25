@@ -17,7 +17,18 @@ export async function POST(request: NextRequest) {
     }
 
     const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: 'array' });
+    const isCsv = file.name.toLowerCase().endsWith('.csv');
+
+    let workbook;
+    if (isCsv) {
+      // For CSV, read as UTF-8 string explicitly to avoid encoding issues like Ø³ÙØ±
+      const decoder = new TextDecoder('utf-8');
+      const csvString = decoder.decode(buffer);
+      workbook = XLSX.read(csvString, { type: 'string' });
+    } else {
+      // For XLSX, the standard array buffer read is robust
+      workbook = XLSX.read(buffer, { type: 'array' });
+    }
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });

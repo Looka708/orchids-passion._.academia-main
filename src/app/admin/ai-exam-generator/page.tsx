@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { MCQ } from "@/lib/types";
 import { FileDown, Printer, Sparkles, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 type GeneratedExam = {
@@ -74,6 +75,8 @@ export default function AIExamGeneratorPage() {
         setSelectedChapters([]);
         setGeneratedExam(null);
     };
+
+    const isUrdu = (text: string | null | undefined) => /[\u0600-\u06FF]/.test(text || "");
 
     const handleSubjectChange = (value: string) => {
         setSelectedSubject(value);
@@ -528,15 +531,15 @@ export default function AIExamGeneratorPage() {
                                                 const optionLetters = ['a', 'b', 'c', 'd', 'e', 'f'];
                                                 return (
                                                     <div key={`mcq-${index}`} className="print-avoid-break leading-tight">
-                                                        <div className="font-semibold">
+                                                        <div className={cn("font-semibold mb-1", isUrdu(mcq.questionText) ? 'font-urdu text-lg rtl-text' : '')}>
                                                             {index + 1}. {mcq.questionText}
                                                         </div>
-                                                        <div className="ml-4 print:ml-3 grid grid-cols-2 gap-x-2 gap-y-0">
+                                                        <div className={cn("ml-4 print:ml-3 grid grid-cols-2 gap-x-4 gap-y-1", isUrdu(mcq.questionText) ? 'font-urdu text-base rtl-text mr-4 ml-0' : '')}>
                                                             {mcq.options.map((option, optIndex) => {
                                                                 const optionText = typeof option === 'string' ? option : option.label;
                                                                 const isCorrect = showAnswerKey && optionText === mcq.correctAnswer;
                                                                 return (
-                                                                    <div key={optIndex} className={isCorrect ? 'font-bold' : ''}>
+                                                                    <div key={optIndex} className={cn(isCorrect ? 'font-bold' : '', isUrdu(optionText) ? 'leading-loose py-0.5' : '')}>
                                                                         {optionLetters[optIndex]}) {optionText}
                                                                         {isCorrect && ' ✓'}
                                                                     </div>
@@ -558,7 +561,7 @@ export default function AIExamGeneratorPage() {
                                         </h3>
                                         <div className="space-y-1.5 print:space-y-1">
                                             {generatedExam.shortQuestions.map((q, index) => (
-                                                <div key={`short-${index}`} className="print-avoid-break leading-tight font-semibold">
+                                                <div key={`short-${index}`} className={cn("print-avoid-break leading-tight font-semibold", isUrdu(q) ? 'font-urdu text-base' : '')}>
                                                     {index + 1}. {q}
                                                 </div>
                                             ))}
@@ -574,7 +577,7 @@ export default function AIExamGeneratorPage() {
                                         </h3>
                                         <div className="space-y-1.5 print:space-y-1">
                                             {generatedExam.longQuestions.map((q, index) => (
-                                                <div key={`long-${index}`} className="print-avoid-break leading-tight font-semibold">
+                                                <div key={`long-${index}`} className={cn("print-avoid-break leading-tight font-semibold", isUrdu(q) ? 'font-urdu text-base text-right' : '')}>
                                                     {index + 1}. {q}
                                                 </div>
                                             ))}

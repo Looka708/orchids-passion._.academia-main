@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { MCQ } from "@/lib/types";
 import { FileDown, Printer, Sparkles, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 type GeneratedExam = {
@@ -21,6 +22,8 @@ type GeneratedExam = {
   shortQuestions: string[];
   longQuestions: string[];
 };
+
+const isUrdu = (text: string | null | undefined) => /[\u0600-\u06FF]/.test(text || "");
 
 const SUBJECTS_BY_COURSE: Record<string, string[]> = {
   "Class 6": ["Computer", "English", "General Science", "Mathematics", "Urdu"],
@@ -325,13 +328,43 @@ export default function ExamGeneratorPage() {
               </div>
               <section className="mb-6">
                 <h3 className="font-bold border-b mb-2">Section A: MCQs</h3>
-                <ol className="list-decimal list-inside space-y-2">
+                <ol className={cn("list-decimal list-inside space-y-4", generatedExam.mcqs.some(m => isUrdu(m.questionText)) ? 'rtl-list' : '')}>
                   {generatedExam.mcqs.map((m, i) => (
-                    <li key={i}>{m.questionText} <span className="ml-4 opacity-70">({m.options.join(" / ")})</span></li>
+                    <li key={i} className={cn("pb-2", isUrdu(m.questionText) ? 'font-urdu text-xl rtl-text leading-relaxed' : 'text-base')}>
+                      <span className={isUrdu(m.questionText) ? 'mr-1' : ''}>{m.questionText}</span>
+                      <div className={cn("mt-1 opacity-80 text-sm", isUrdu(m.questionText) ? 'pr-6' : 'pl-6')}>
+                        ({m.options.join(" / ")})
+                      </div>
+                    </li>
                   ))}
                 </ol>
               </section>
-              {/* Simplified view for brevity in this response */}
+
+              {generatedExam.shortQuestions.length > 0 && (
+                <section className="mb-6">
+                  <h3 className="font-bold border-b mb-2">Section B: Short Questions</h3>
+                  <ol className={cn("list-decimal list-inside space-y-3", generatedExam.shortQuestions.some(q => isUrdu(q)) ? 'rtl-list' : '')}>
+                    {generatedExam.shortQuestions.map((q, i) => (
+                      <li key={i} className={cn("pb-1", isUrdu(q) ? 'font-urdu text-xl rtl-text leading-relaxed' : 'text-base')}>
+                        {q}
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
+
+              {generatedExam.longQuestions.length > 0 && (
+                <section className="mb-6">
+                  <h3 className="font-bold border-b mb-2">Section C: Long Questions</h3>
+                  <ol className={cn("list-decimal list-inside space-y-4", generatedExam.longQuestions.some(q => isUrdu(q)) ? 'rtl-list' : '')}>
+                    {generatedExam.longQuestions.map((q, i) => (
+                      <li key={i} className={cn("pb-2", isUrdu(q) ? 'font-urdu text-xl rtl-text leading-relaxed' : 'text-base')}>
+                        {q}
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
             </div>
           )}
         </div>

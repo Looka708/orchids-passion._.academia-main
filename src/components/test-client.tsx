@@ -22,6 +22,8 @@ import { cn } from "@/lib/utils";
 import Confetti from "./confetti";
 import VideoSuggestionWrapper from "./video/VideoSuggestionWrapper";
 
+const isUrdu = (text: string | null | undefined) => /[\u0600-\u06FF]/.test(text || "");
+
 interface TestClientProps {
   grade: number | string;
   subject: string;
@@ -209,14 +211,16 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
                   {mcq.questionImage && (
                     <div className="mb-4 flex justify-center" dangerouslySetInnerHTML={{ __html: mcq.questionImage }} />
                   )}
-                  {mcq.questionText && <p className={cn("font-semibold", mcq.language === 'urdu' ? 'font-urdu text-xl text-right' : '')}>{`${index + 1}. ${mcq.questionText}`}</p>}
+                  {mcq.questionText && <p className={cn("font-semibold", (mcq.language === 'urdu' || isUrdu(mcq.questionText)) ? 'font-urdu text-2xl text-right leading-relaxed mb-2' : '')}>{`${index + 1}. ${mcq.questionText}`}</p>}
 
-                  <div className={cn("mt-2 text-sm", mcq.language === 'urdu' ? 'font-urdu text-lg text-right' : '')}>
-                    <p className={isCorrect ? 'text-green-600' : 'text-red-600'}>
-                      Your answer: {userAnswer || "Not answered"}
-                      {isCorrect ? <CheckCircle className="inline ml-2 h-4 w-4" /> : <XCircle className="inline ml-2 h-4 w-4" />}
+                  <div className={cn("mt-2 text-sm space-y-1", (mcq.language === 'urdu' || isUrdu(mcq.questionText)) ? 'font-urdu text-xl text-right' : '')}>
+                    <p className={cn("flex items-center gap-2", (mcq.language === 'urdu' || isUrdu(mcq.questionText)) ? 'flex-row-reverse' : '', isCorrect ? 'text-green-600' : 'text-red-600')}>
+                      <span>{isUrdu(userAnswer) || mcq.language === 'urdu' ? 'آپ کا جواب:' : 'Your answer:'} {userAnswer || (mcq.language === 'urdu' ? "جواب نہیں دیا" : "Not answered")}</span>
+                      {isCorrect ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
                     </p>
-                    {!isCorrect && <p className="text-green-600">Correct answer: {mcq.correctAnswer}</p>}
+                    {!isCorrect && <p className="text-green-600">
+                      {isUrdu(mcq.correctAnswer) || mcq.language === 'urdu' ? 'صحیح جواب:' : 'Correct answer:'} {mcq.correctAnswer}
+                    </p>}
                   </div>
                 </div>
               );
@@ -249,7 +253,7 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
           <CardHeader>
             <Progress value={(currentQuestionIndex + 1) / mcqs.length * 100} className="mb-4" />
             <div className="flex justify-between items-center">
-              <CardTitle className={cn("text-xl", currentMcq.language === 'urdu' ? 'font-urdu text-2xl text-right' : '')}>
+              <CardTitle className={cn("text-xl", (currentMcq.language === 'urdu' || isUrdu(currentMcq.questionText)) ? 'font-urdu text-2xl text-right' : '')}>
                 {`Question ${currentQuestionIndex + 1} of ${mcqs.length}`}
               </CardTitle>
               <div className="flex items-center gap-2 font-bold text-lg">
@@ -257,7 +261,7 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
                 <span>{timeLeft}s</span>
               </div>
             </div>
-            {currentMcq.questionText && <CardDescription className={cn("pt-4 text-lg", currentMcq.language === 'urdu' ? 'font-urdu text-xl text-right' : '')}>
+            {currentMcq.questionText && <CardDescription className={cn("pt-4 text-lg", (currentMcq.language === 'urdu' || isUrdu(currentMcq.questionText)) ? 'font-urdu text-xl text-right' : '')}>
               {currentMcq.questionText}
             </CardDescription>}
             {currentMcq.questionImage && (
@@ -274,13 +278,31 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
                 {currentMcq.options.map((option) => {
                   const optionValue = getOptionValue(option);
                   const optionId = `${currentMcq.id}-${optionValue}`;
+                  const isOptionUrdu = typeof option === 'string' && isUrdu(option);
+                  const isUrduMcq = currentMcq.language === 'urdu' || isUrdu(currentMcq.questionText);
 
                   return (
-                    <div key={optionId} className={cn("flex items-center rounded-md border border-input p-2", selectedAnswers[currentQuestionIndex] === optionValue ? 'bg-primary/10 border-primary ring-2 ring-primary' : '')}>
-                      <RadioGroupItem value={optionValue} id={optionId} className="mr-2" />
-                      <Label htmlFor={optionId} className="flex flex-col items-center justify-center w-full cursor-pointer">
+                    <div
+                      key={optionId}
+                      className={cn(
+                        "flex items-center rounded-md border border-input p-3 transition-all hover:bg-accent/50",
+                        selectedAnswers[currentQuestionIndex] === optionValue ? 'bg-primary/10 border-primary ring-1 ring-primary' : '',
+                        (isUrduMcq || isOptionUrdu) ? 'flex-row-reverse space-x-reverse' : ''
+                      )}
+                    >
+                      <RadioGroupItem value={optionValue} id={optionId} className={cn((isUrduMcq || isOptionUrdu) ? 'ml-2' : 'mr-2')} />
+                      <Label
+                        htmlFor={optionId}
+                        className={cn(
+                          "flex w-full cursor-pointer py-1",
+                          (isUrduMcq || isOptionUrdu) ? 'justify-end text-right' : 'justify-start text-left',
+                          typeof option !== 'string' ? 'flex-col items-center justify-center' : 'items-center'
+                        )}
+                      >
                         {typeof option === 'string' ? (
-                          <span className={cn(currentMcq.language === 'urdu' ? 'font-urdu text-lg' : '')}>{option}</span>
+                          <span className={cn((isUrduMcq || isUrdu(option)) ? 'font-urdu text-xl leading-relaxed' : 'text-base')}>
+                            {option}
+                          </span>
                         ) : (
                           <>
                             <div dangerouslySetInnerHTML={{ __html: option.svg }} />

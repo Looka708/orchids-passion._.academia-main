@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { ProtectedRoute } from "@/components/protected-route";
+import { cn } from "@/lib/utils";
 import {
   Plus,
   Pencil,
@@ -114,6 +115,8 @@ interface CourseStructure {
 }
 
 // Default fallback course types
+const isUrdu = (text: string) => /[\u0600-\u06FF]/.test(text || "");
+
 const DEFAULT_COURSE_TYPES = [
   "afns",
   "paf",
@@ -700,7 +703,8 @@ function MCQAdminContent() {
       sampleRow.join(","),
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -1104,9 +1108,12 @@ function MCQAdminContent() {
                       <TableBody>
                         {mcqs.slice(0, visibleMcqsCount).map((mcq, index) => (
                           <TableRow
-
                             key={mcq.id}
-                            className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 ${selectedMcqs.has(mcq.id) ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
+                            className={cn(
+                              "hover:bg-slate-50 dark:hover:bg-slate-800/50",
+                              selectedMcqs.has(mcq.id) ? 'bg-indigo-50 dark:bg-indigo-900/20' : '',
+                              mcq.language === 'urdu' ? 'rtl-text' : ''
+                            )}
                           >
                             <TableCell className="text-center">
                               <Checkbox
@@ -1119,7 +1126,7 @@ function MCQAdminContent() {
                             </TableCell>
                             <TableCell>
                               <div className="max-w-md">
-                                <p className="line-clamp-2 font-medium">
+                                <p className={cn("line-clamp-2 font-medium", mcq.language === 'urdu' ? 'font-urdu text-xl' : '')}>
                                   {mcq.question_text || "(Image-based question)"}
                                 </p>
                                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -1137,12 +1144,14 @@ function MCQAdminContent() {
                                         }`}
                                     >
                                       {String.fromCharCode(65 + i)}){" "}
-                                      {typeof opt === "string"
-                                        ? opt.substring(0, 25)
-                                        : "..."}
-                                      {typeof opt === "string" &&
-                                        opt.length > 25 &&
-                                        "..."}
+                                      <span className={cn(mcq.language === 'urdu' ? 'font-urdu' : '')}>
+                                        {typeof opt === "string"
+                                          ? opt.substring(0, 25)
+                                          : "..."}
+                                        {typeof opt === "string" &&
+                                          opt.length > 25 &&
+                                          "..."}
+                                      </span>
                                     </Badge>
                                   ))}
                                 </div>
@@ -1157,7 +1166,7 @@ function MCQAdminContent() {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <span className="text-sm text-green-600 dark:text-green-400 font-medium line-clamp-1">
+                              <span className={cn("text-sm text-green-600 dark:text-green-400 font-medium line-clamp-1", mcq.language === 'urdu' ? 'font-urdu text-lg' : '')}>
                                 {mcq.correct_answer.substring(0, 35)}
                                 {mcq.correct_answer.length > 35 && "..."}
                               </span>
@@ -1331,6 +1340,7 @@ function MCQAdminContent() {
                   }
                   placeholder="Enter the question..."
                   rows={3}
+                  className={cn(isUrdu(formData.question_text) ? 'font-urdu text-xl rtl-text' : '')}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -1339,6 +1349,7 @@ function MCQAdminContent() {
                   <Input
                     value={formData.option_a}
                     onChange={(e) => setFormData({ ...formData, option_a: e.target.value })}
+                    className={cn(isUrdu(formData.option_a) ? 'font-urdu text-xl rtl-text' : '')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -1346,6 +1357,7 @@ function MCQAdminContent() {
                   <Input
                     value={formData.option_b}
                     onChange={(e) => setFormData({ ...formData, option_b: e.target.value })}
+                    className={cn(isUrdu(formData.option_b) ? 'font-urdu text-xl rtl-text' : '')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -1353,6 +1365,7 @@ function MCQAdminContent() {
                   <Input
                     value={formData.option_c}
                     onChange={(e) => setFormData({ ...formData, option_c: e.target.value })}
+                    className={cn(isUrdu(formData.option_c) ? 'font-urdu text-xl rtl-text' : '')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -1360,6 +1373,7 @@ function MCQAdminContent() {
                   <Input
                     value={formData.option_d}
                     onChange={(e) => setFormData({ ...formData, option_d: e.target.value })}
+                    className={cn(isUrdu(formData.option_d) ? 'font-urdu text-xl rtl-text' : '')}
                   />
                 </div>
               </div>
@@ -1430,6 +1444,7 @@ function MCQAdminContent() {
                   }
                   placeholder="Enter the question..."
                   rows={3}
+                  className={cn(isUrdu(formData.question_text) ? 'font-urdu text-xl rtl-text' : '')}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
