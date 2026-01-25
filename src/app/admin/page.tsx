@@ -420,29 +420,230 @@ export default function AdminPage() {
 
     return (
         <ProtectedRoute adminOnly={true}>
-            <div className="flex min-h-[calc(100vh-5rem)] flex-col bg-muted/40 p-4 md:p-8">
-                <div className="mx-auto grid w-full max-w-2xl gap-4">
-                    <Card className="border-0 shadow-lg overflow-hidden">
-                        <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-b">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-indigo-500/10 rounded-lg">
-                                        <UserPlus className="h-5 w-5 text-indigo-500" />
-                                    </div>
+            <div className="flex min-h-[calc(100vh-5rem)] flex-col bg-slate-50/50 dark:bg-slate-900/50 p-4 md:p-8">
+                <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+                    {/* Header Section */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                                Admin Dashboard
+                            </h1>
+                            <p className="text-muted-foreground mt-1 text-lg">
+                                Manage users, classes, and monitor database statistics.
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Badge variant="outline" className="px-4 py-2 bg-white dark:bg-slate-800 shadow-sm text-base">
+                                <Users className="mr-2 h-4 w-4 text-indigo-500" />
+                                {users.length} Users
+                            </Badge>
+                            <Badge variant="outline" className="px-4 py-2 bg-white dark:bg-slate-800 shadow-sm text-base">
+                                <Database className="mr-2 h-4 w-4 text-purple-500" />
+                                {totalMcqs.toLocaleString()} MCQs
+                            </Badge>
+                        </div>
+                    </div>
+
+                    {/* Quick Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border-l-4 border-l-blue-500">
+                            <CardContent className="p-6">
+                                <div className="flex items-center justify-between">
                                     <div>
-                                        <CardTitle className="text-xl">Create New User</CardTitle>
-                                        <CardDescription>
-                                            {currentUser?.role === 'teacher'
-                                                ? `Create student accounts (${users.filter(u => u.createdBy === currentUser.email).length}/100)`
-                                                : currentUser?.role === 'owner'
-                                                    ? `Full access. Create any account type.`
-                                                    : `Create student or teacher accounts.`}
-                                        </CardDescription>
+                                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">Total Users</p>
+                                        <h3 className="text-2xl font-bold mt-1">{users.length}</h3>
+                                    </div>
+                                    <div className="p-3 bg-blue-500/20 rounded-xl text-blue-600">
+                                        <Users className="h-6 w-6" />
                                     </div>
                                 </div>
+                            </CardContent>
+                        </Card>
+                        <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-l-4 border-l-purple-500">
+                            <CardContent className="p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wider">Total MCQs</p>
+                                        <h3 className="text-2xl font-bold mt-1">{totalMcqs.toLocaleString()}</h3>
+                                    </div>
+                                    <div className="p-3 bg-purple-500/20 rounded-xl text-purple-600">
+                                        <Database className="h-6 w-6" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card className="border-0 shadow-sm bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-l-4 border-l-amber-500">
+                            <CardContent className="p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">Active Classes</p>
+                                        <h3 className="text-2xl font-bold mt-1">{classes.length}</h3>
+                                    </div>
+                                    <div className="p-3 bg-amber-500/20 rounded-xl text-amber-600">
+                                        <LayoutGrid className="h-6 w-6" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card className="border-0 shadow-sm bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-l-4 border-l-green-500">
+                            <CardContent className="p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-green-600 dark:text-green-400 uppercase tracking-wider">Support Chats</p>
+                                        <h3 className="text-2xl font-bold mt-1">Live</h3>
+                                    </div>
+                                    <div className="p-3 bg-green-500/20 rounded-xl text-green-600">
+                                        <MessageSquare className="h-6 w-6" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <Tabs defaultValue="overview" className="space-y-6">
+                        <TabsList className="bg-white dark:bg-slate-800 border p-1 h-12 shadow-sm">
+                            <TabsTrigger value="overview" className="px-6 data-[state=active]:bg-indigo-500 data-[state=active]:text-white transition-all">
+                                <LayoutGrid className="mr-2 h-4 w-4" />
+                                Overview
+                            </TabsTrigger>
+                            <TabsTrigger value="users" className="px-6 data-[state=active]:bg-indigo-500 data-[state=active]:text-white transition-all">
+                                <Users className="mr-2 h-4 w-4" />
+                                User Management
+                            </TabsTrigger>
+                            <TabsTrigger value="classes" className="px-6 data-[state=active]:bg-indigo-500 data-[state=active]:text-white transition-all">
+                                <GraduationCap className="mr-2 h-4 w-4" />
+                                Classes
+                            </TabsTrigger>
+                            <TabsTrigger value="mcqs" className="px-6 data-[state=active]:bg-indigo-500 data-[state=active]:text-white transition-all">
+                                <Database className="mr-2 h-4 w-4" />
+                                MCQ Stats
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="overview" className="space-y-6 outline-none">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div className="lg:col-span-2 space-y-6">
+                                    {/* Copy of MCQ Stats Table for overview */}
+                                    <Card className="border-0 shadow-md">
+                                        <CardHeader className="border-b bg-slate-50/50 dark:bg-slate-800/50">
+                                            <CardTitle className="text-lg flex items-center gap-2">
+                                                <Database className="h-5 w-5 text-indigo-500" />
+                                                Recent Database Overview
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="pt-6">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>Course</TableHead>
+                                                        <TableHead className="text-right">Total MCQs</TableHead>
+                                                        <TableHead className="text-right">Action</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {mcqStats.slice(0, 5).map((course) => (
+                                                        <TableRow key={course.course_type}>
+                                                            <TableCell className="font-medium">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span>{COURSE_ICONS[course.course_type] || "📚"}</span>
+                                                                    <span>{COURSE_LABELS[course.course_type] || course.course_type}</span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="text-right font-bold text-indigo-600">
+                                                                {course.total.toLocaleString()}
+                                                            </TableCell>
+                                                            <TableCell className="text-right">
+                                                                <Button asChild variant="ghost" size="sm">
+                                                                    <Link href={`/admin/mcqs?course=${course.course_type}`}>
+                                                                        <ExternalLink className="h-4 w-4" />
+                                                                    </Link>
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                            <Button asChild variant="outline" className="w-full mt-4">
+                                                <Link href="/admin/mcqs">View All MCQs</Link>
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Button asChild variant="secondary" className="h-24 text-lg bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-500/20">
+                                            <Link href="/admin/mcqs?action=add">
+                                                <Plus className="mr-3 h-6 w-6" />
+                                                Add New MCQ
+                                            </Link>
+                                        </Button>
+                                        <Button asChild variant="secondary" className="h-24 text-lg bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20">
+                                            <Link href="/admin/exam-generator">
+                                                <FileText className="mr-3 h-6 w-6" />
+                                                Generate Exam
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <Card className="border-0 shadow-md">
+                                        <CardHeader className="border-b bg-slate-50/50 dark:bg-slate-800/50">
+                                            <CardTitle className="text-lg flex items-center gap-2">
+                                                <Users className="h-5 w-5 text-indigo-500" />
+                                                Users Link
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="pt-6 space-y-4">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-muted-foreground">Total Registered:</span>
+                                                <span className="font-bold">{users.length}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-muted-foreground">Recent Logins:</span>
+                                                <span className="font-bold text-green-500">Active</span>
+                                            </div>
+                                            <Button asChild className="w-full" variant="outline">
+                                                <Link href="/admin/chats">
+                                                    <MessageSquare className="mr-2 h-4 w-4" />
+                                                    View Support Chats
+                                                </Link>
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="border-0 shadow-md bg-indigo-900 text-indigo-100">
+                                        <CardHeader>
+                                            <CardTitle className="text-white">Admin Quick Link</CardTitle>
+                                            <CardDescription className="text-indigo-300">Fast navigation to core features</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="grid grid-cols-1 gap-2">
+                                            <Button asChild variant="ghost" className="justify-start text-indigo-100 hover:bg-indigo-800 hover:text-white">
+                                                <Link href="/admin/subjects"><BookOpen className="mr-2 h-4 w-4" /> Subjects Setup</Link>
+                                            </Button>
+                                            <Button asChild variant="ghost" className="justify-start text-indigo-100 hover:bg-indigo-800 hover:text-white">
+                                                <Link href="/admin/mcqs"><Database className="mr-2 h-4 w-4" /> MCQ Browser</Link>
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                </div>
                             </div>
-                        </CardHeader>
-                        <CardContent className="pt-6">
+                        </TabsContent>
+
+                        <TabsContent value="users" className="space-y-6 outline-none">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <div className="lg:col-span-1">
+                                    <Card className="border-0 shadow-lg overflow-hidden sticky top-8">
+                                        <CardHeader className="bg-slate-50 dark:bg-slate-800 border-b">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-indigo-500/10 rounded-lg">
+                                                    <UserPlus className="h-5 w-5 text-indigo-500" />
+                                                </div>
+                                                <div>
+                                                    <CardTitle className="text-lg">Create New User</CardTitle>
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="pt-6">
                             <form onSubmit={handleAddUser} className="flex flex-col gap-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="new-user-name">Full Name</Label>
@@ -531,23 +732,25 @@ export default function AdminPage() {
                             </form>
                         </CardContent>
                     </Card>
+                </div>
 
-                    <Card className="mt-8 border-0 shadow-lg overflow-hidden">
-                        <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-b">
+                <div className="lg:col-span-2">
+                    <Card className="border-0 shadow-lg overflow-hidden">
+                        <CardHeader className="bg-slate-50 dark:bg-slate-800 border-b">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-indigo-500/10 rounded-lg">
                                         <Users className="h-5 w-5 text-indigo-500" />
                                     </div>
                                     <div>
-                                        <CardTitle className="text-xl">Manage Users</CardTitle>
+                                        <CardTitle className="text-lg">Manage Users</CardTitle>
                                         <CardDescription>
                                             Activate, deactivate, or delete user accounts.
                                         </CardDescription>
                                     </div>
                                 </div>
-                                <Badge variant="secondary" className="bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 px-3 py-1 text-sm">
-                                    {users.length} Total Users
+                                <Badge variant="secondary" className="px-3 py-1">
+                                    {users.length} Users
                                 </Badge>
                             </div>
                         </CardHeader>
@@ -671,31 +874,36 @@ export default function AdminPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="mt-8 border-0 shadow-lg overflow-hidden">
-                        <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-b">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-indigo-500/10 rounded-lg">
-                                        <LayoutGrid className="h-5 w-5 text-indigo-500" />
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-xl">Classes Management</CardTitle>
-                                        <CardDescription>
-                                            Add new grades or special test categories.
-                                        </CardDescription>
-                                    </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </TabsContent>
+
+        <TabsContent value="classes" className="space-y-6 outline-none">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-1">
+                    <Card className="border-0 shadow-lg overflow-hidden sticky top-8">
+                        <CardHeader className="bg-slate-50 dark:bg-slate-800 border-b">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-500/10 rounded-lg">
+                                    <Plus className="h-5 w-5 text-indigo-500" />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-lg">Add New Class</CardTitle>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="pt-6">
-                            <form onSubmit={handleAddClass} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 p-4 bg-muted/30 rounded-xl border border-dashed">
+                            <form onSubmit={handleAddClass} className="flex flex-col gap-4">
                                 <div className="grid gap-2">
                                     <Label>Class Name</Label>
-                                    <Input placeholder="e.g. Class 10 or AFNS" value={newClassName} onChange={e => setNewClassName(e.target.value)} required />
+                                    <Input placeholder="e.g. Class 10" value={newClassName} onChange={e => setNewClassName(e.target.value)} required />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label>Slug</Label>
-                                    <Input placeholder="e.g. class-10 or afns" value={newClassSlug} onChange={e => setNewClassSlug(e.target.value)} required />
+                                    <Input placeholder="e.g. class-10" value={newClassSlug} onChange={e => setNewClassSlug(e.target.value)} required />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label>Category</Label>
@@ -719,69 +927,70 @@ export default function AdminPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="md:col-span-2 grid gap-2">
+                                <div className="grid gap-2">
                                     <Label>Description</Label>
                                     <Input placeholder="Brief description..." value={newClassDesc} onChange={e => setNewClassDesc(e.target.value)} />
                                 </div>
-                                <Button type="submit" className="md:col-span-2 bg-indigo-600 hover:bg-indigo-700">
+                                <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
                                     <Plus className="mr-2 h-4 w-4" /> Add New Class
                                 </Button>
                             </form>
+                        </CardContent>
+                    </Card>
+                </div>
 
+                <div className="lg:col-span-2">
+                    <Card className="border-0 shadow-lg overflow-hidden">
+                        <CardHeader className="bg-slate-50 dark:bg-slate-800 border-b">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-indigo-500/10 rounded-lg">
+                                        <LayoutGrid className="h-5 w-5 text-indigo-500" />
+                                    </div>
+                                    <div>
+                                        <CardTitle className="text-lg">Class List</CardTitle>
+                                    </div>
+                                </div>
+                                <Badge variant="secondary" className="px-3 py-1">
+                                    {classes.length} Classes
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="pt-6">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Class</TableHead>
                                         <TableHead>Category</TableHead>
                                         <TableHead>Slug</TableHead>
-                                        <TableHead className="text-right">Order</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {classesLoading ? (
-                                        <TableRow><TableCell colSpan={5} className="text-center py-4">
-                                            <RefreshCw className="h-4 w-4 animate-spin mx-auto text-indigo-500" />
-                                        </TableCell></TableRow>
-                                    ) : classes.length === 0 ? (
-                                        <TableRow><TableCell colSpan={5} className="text-center py-4 text-muted-foreground">No classes found</TableCell></TableRow>
+                                        <TableRow><TableCell colSpan={4} className="text-center"><RefreshCw className="h-4 w-4 animate-spin mx-auto" /></TableCell></TableRow>
                                     ) : classes.map((cls) => (
                                         <TableRow key={cls.id}>
                                             <TableCell className="font-medium">
                                                 <div className="flex items-center gap-2">
-                                                    {cls.icon === 'GraduationCap' && <GraduationCap className="h-4 w-4 text-indigo-500" />}
-                                                    {cls.icon === 'Plane' && <Plane className="h-4 w-4 text-indigo-500" />}
-                                                    {cls.icon === 'FlaskConical' && <FlaskConical className="h-4 w-4 text-indigo-500" />}
-                                                    {cls.icon === 'ShieldCheck' && <ShieldCheck className="h-4 w-4 text-indigo-500" />}
-                                                    {cls.name}
+                                                    {COURSE_ICONS[cls.slug] || "📚"} {cls.name}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                <Badge variant={cls.category === 'special' ? 'default' : 'secondary'} className="capitalize">
-                                                    {cls.category}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="font-mono text-xs text-muted-foreground">{cls.slug}</TableCell>
-                                            <TableCell className="text-right font-medium">{cls.display_order}</TableCell>
+                                            <TableCell><Badge variant="outline">{cls.category}</Badge></TableCell>
+                                            <TableCell className="font-mono text-xs">{cls.slug}</TableCell>
                                             <TableCell className="text-right">
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        <Button variant="ghost" size="icon" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                                                     </AlertDialogTrigger>
                                                     <AlertDialogContent>
                                                         <AlertDialogHeader>
                                                             <AlertDialogTitle>Delete Class?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                Are you sure you want to delete <strong>{cls.name}</strong>? This action cannot be undone.
-                                                            </AlertDialogDescription>
+                                                            <AlertDialogDescription>Permanent action. This will delete {cls.name}.</AlertDialogDescription>
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>
                                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDeleteClass(cls.id, cls.name)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                                                Delete
-                                                            </AlertDialogAction>
+                                                            <AlertDialogAction onClick={() => handleDeleteClass(cls.id, cls.name)} className="bg-destructive">Delete</AlertDialogAction>
                                                         </AlertDialogFooter>
                                                     </AlertDialogContent>
                                                 </AlertDialog>
@@ -792,40 +1001,30 @@ export default function AdminPage() {
                             </Table>
                         </CardContent>
                     </Card>
+                </div>
+            </div>
+        </TabsContent>
 
-                    <Card className="mt-8">
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <CardTitle className="flex items-center gap-2 text-xl">
-                                        <Database className="h-5 w-5 text-indigo-500" />
-                                        Database Stats
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Overview of all MCQs in the database by course
-                                    </CardDescription>
-                                </div>
-                                <div className="flex gap-2">
-                                    <Link href="/admin/chats">
-                                        <Button variant="outline" size="sm" className="gap-2">
-                                            <MessageSquare className="h-4 w-4" />
-                                            Support Chats
-                                        </Button>
-                                    </Link>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => loadMcqStats()}
-                                        disabled={mcqLoading}
-                                        className="gap-2"
-                                    >
-                                        <RefreshCw className={cn("h-4 w-4", mcqLoading && "animate-spin")} />
-                                        Refresh Stats
-                                    </Button>
-                                </div>
+        <TabsContent value="mcqs" className="space-y-6 outline-none">
+            <Card className="border-0 shadow-lg overflow-hidden">
+                <CardHeader className="bg-slate-50 dark:bg-slate-800 border-b">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-500/10 rounded-lg">
+                                <Database className="h-5 w-5 text-indigo-500" />
                             </div>
-                        </CardHeader>
-                        <CardContent>
+                            <div>
+                                <CardTitle className="text-lg">Database Statistics</CardTitle>
+                                <CardDescription>Overview of all MCQs currently in the database.</CardDescription>
+                            </div>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => loadMcqStats()} disabled={mcqLoading}>
+                            <RefreshCw className={cn("h-4 w-4 mr-2", mcqLoading && "animate-spin")} />
+                            Refresh Stats
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="pt-6">
                             {mcqLoading ? (
                                 <div className="flex items-center justify-center py-8">
                                     <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -887,30 +1086,13 @@ export default function AdminPage() {
                                     </TableBody>
                                 </Table>
                             )}
-                            <div className="flex flex-wrap gap-4 mt-8 pt-6 border-t">
-                                <Button asChild className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 border-0 shadow-md shadow-green-500/20">
-                                    <Link href="/admin/mcqs?action=add">
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Add MCQ
-                                    </Link>
-                                </Button>
-                                <Button asChild variant="secondary" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-md shadow-indigo-500/20">
-                                    <Link href="/admin/mcqs">
-                                        <Database className="mr-2 h-4 w-4" />
-                                        View All MCQs
-                                    </Link>
-                                </Button>
-                                <Button asChild variant="outline" className="border-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-                                    <Link href="/admin/exam-generator" className="flex items-center">
-                                        <FileText className="mr-2 h-4 w-4 text-indigo-500" />
-                                        Generate Exams
-                                    </Link>
-                                </Button>
                             </div>
                         </CardContent>
                     </Card>
-                </div >
-            </div >
-        </ProtectedRoute >
+                </TabsContent >
+            </Tabs >
+        </div >
+    </div >
+</ProtectedRoute >
     );
 }
