@@ -1,8 +1,8 @@
+@import url('https://cdn.jsdelivr.net/npm/jameel-noori-nastaliq-kasheeda@1.1.0/jameel-noori-nastaliq-kasheeda.min.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://cdn.jsdelivr.net/gh/Suhail-Abbas/Jameel-Noori-Nastaleeq@latest/Jameel-Noori-Nastaleeq.css');
 
 /* =========================================================
    BASE THEME VARIABLES
@@ -118,7 +118,7 @@ html {
    URDU & RTL SUPPORT
    ========================================================= */
 .font-urdu {
-  font-family: 'Jameel Noori Nastaleeq', var(--font-urdu), serif;
+  font-family: 'JameelNooriNastaliqKashida', 'Jameel Noori Nastalee', var(--font-urdu), serif;
   line-height: 2.2;
   font-display: swap;
 }
