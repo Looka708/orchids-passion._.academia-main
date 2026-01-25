@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useAuth } from "@/hooks/useAuth"
 import { db, storage } from "@/lib/firebase/config"
+import { getAIResponse } from "@/app/actions"
 import {
     collection,
     addDoc,
@@ -55,6 +56,7 @@ export default function LiveChat() {
     const [messages, setMessages] = useState<Message[]>([])
     const [newMessage, setNewMessage] = useState("")
     const [isUploading, setIsUploading] = useState(false)
+    const [isTyping, setIsTyping] = useState(false)
     const [uploadProgress, setUploadProgress] = useState(0)
     const scrollRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -128,10 +130,38 @@ export default function LiveChat() {
                 userName: user?.name || "Guest User",
                 userEmail: user?.email || "guest",
                 userPhoto: user?.photoURL || "",
-                unreadCount: 0 // This would need more complex logic for true unread counts
+                unreadCount: 0
             }, { merge: true })
+
+            // Get AI Response
+            setIsTyping(true)
+            const history = messages.slice(-5).map(m => ({
+                role: m.senderId === (user?.email || "guest") ? 'user' : 'assistant' as 'user' | 'assistant',
+                content: m.text || ""
+            }))
+
+            const aiResult = await getAIResponse(newMessage, history)
+
+            if (aiResult.success && aiResult.text) {
+                const aiMessageData = {
+                    text: aiResult.text,
+                    senderId: "ai_bot",
+                    senderName: "Passion AI (DeepSeek-R1)",
+                    senderPhoto: "/logo.png",
+                    timestamp: serverTimestamp(),
+                    type: 'text'
+                }
+                await addDoc(collection(db, "chats", chatId, "messages"), aiMessageData)
+
+                await setDoc(doc(db, "chats", chatId), {
+                    lastMessage: aiResult.text,
+                    lastTimestamp: serverTimestamp(),
+                }, { merge: true })
+            }
         } catch (error) {
             console.error("Error sending message:", error)
+        } finally {
+            setIsTyping(false)
         }
     }
 
@@ -203,8 +233,8 @@ export default function LiveChat() {
                                     <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-primary bg-green-500" />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold leading-none">Passion Support</h3>
-                                    <p className="mt-1 text-xs opacity-90">We're online to help you</p>
+                                    <h3 className="font-semibold leading-none">Passion Academia Support System</h3>
+                                    <p className="mt-1 text-xs opacity-90">DeepSeek-R1 AI Online</p>
                                 </div>
                             </div>
                             <Button
@@ -232,6 +262,7 @@ export default function LiveChat() {
                                 )}
                                 {messages.map((msg, index) => {
                                     const isMe = msg.senderId === (user?.email || "guest")
+                                    const isAI = msg.senderId === "ai_bot"
                                     return (
                                         <div
                                             key={msg.id}
@@ -241,21 +272,23 @@ export default function LiveChat() {
                                             )}
                                         >
                                             <div className={cn(
-                                                "flex max-w-[80%] items-end gap-2",
+                                                "flex max-w-[85%] items-end gap-2",
                                                 isMe ? "flex-row-reverse" : "flex-row"
                                             )}>
-                                                <Avatar className="h-6 w-6 shrink-0">
-                                                    <AvatarImage src={msg.senderPhoto} />
+                                                <Avatar className={cn("h-6 w-6 shrink-0", isAI && "border border-primary/20")}>
+                                                    <AvatarImage src={isAI ? "/logo.png" : msg.senderPhoto} />
                                                     <AvatarFallback className="text-[10px]">
-                                                        {msg.senderName.substring(0, 2).toUpperCase()}
+                                                        {isAI ? "AI" : msg.senderName.substring(0, 2).toUpperCase()}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div
                                                     className={cn(
-                                                        "rounded-2xl px-4 py-2 text-sm",
+                                                        "rounded-2xl px-4 py-2 text-sm shadow-sm",
                                                         isMe
                                                             ? "bg-primary text-primary-foreground rounded-br-none"
-                                                            : "bg-muted text-foreground rounded-bl-none"
+                                                            : isAI
+                                                                ? "bg-indigo-50 dark:bg-indigo-900/30 text-foreground border border-indigo-100 dark:border-indigo-800 rounded-bl-none"
+                                                                : "bg-muted text-foreground rounded-bl-none"
                                                     )}
                                                 >
                                                     {msg.type === 'text' && (
@@ -291,6 +324,18 @@ export default function LiveChat() {
                                         </div>
                                     )
                                 })}
+                                {isTyping && (
+                                    <div className="flex items-center gap-2">
+                                        <Avatar className="h-6 w-6 shrink-0">
+                                            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">AI</AvatarFallback>
+                                        </Avatar>
+                                        <div className="bg-muted px-4 py-2 rounded-2xl rounded-bl-none flex gap-1">
+                                            <span className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full animate-bounce" />
+                                            <span className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full animate-bounce [animation-delay:0.2s]" />
+                                            <span className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full animate-bounce [animation-delay:0.4s]" />
+                                        </div>
+                                    </div>
+                                )}
                                 <div ref={scrollRef} />
                             </div>
                         </ScrollArea>

@@ -6,6 +6,7 @@ import { auth } from "@/lib/firebase/config";
 import { toggleUserActiveStatus, getAllUsers, deleteUser, getUserByEmail, setUserData } from '@/lib/users';
 import type { User } from '@/lib/users';
 import { Resend } from 'resend';
+import { openRouterClient } from "@/lib/openrouter";
 
 
 
@@ -120,5 +121,27 @@ export async function sendVerificationEmail(email: string, name: string, code: s
     } catch (error: any) {
         console.error("Critical Email Sending Error:", error);
         return { success: false, error: error.message };
+    }
+}
+
+export async function getAIResponse(message: string, history: { role: 'user' | 'assistant' | 'system', content: string }[]) {
+    try {
+        const systemPrompt = `You are the Official AI Support Assistant for Passion Academia. 
+Passion Academia is an advanced educational platform for students (Grades 6-12) and competitive exam aspirants (AFNS, PAF, MCJ, MCM).
+Your goal is to provide helpful, professional, and accurate support. 
+If the user asks about technical issues, academic content, or platform features, help them directly.
+Be polite and encouraging. 
+Always refer to yourself as "Passion Support Bot".`;
+
+        const response = await openRouterClient.generateCompletion(message, systemPrompt, {
+            model: "deepseek/deepseek-r1:free",
+            temperature: 0.7,
+            max_tokens: 1000
+        });
+
+        return { success: true, text: response };
+    } catch (error: any) {
+        console.error("AI Response Error:", error);
+        return { success: false, error: "AI is currently resting. Please try again later." };
     }
 }
