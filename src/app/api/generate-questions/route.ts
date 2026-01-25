@@ -56,7 +56,7 @@ IMPORTANT:
                 'X-Title': 'Passion Academia Exam Generator',
             },
             body: JSON.stringify({
-                model: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
+                model: process.env.OPENROUTER_MODEL || 'google/gemma-3-27b-it:free',
                 messages: [
                     {
                         role: 'system',
@@ -78,7 +78,7 @@ IMPORTANT:
             console.error('Status:', response.status, response.statusText);
             console.error('Response:', errorData);
             console.error('API Key exists:', !!apiKey);
-            console.error('Model:', process.env.OPENROUTER_MODEL || 'openai/gpt-oss-120b:free');
+            console.error('Model:', process.env.OPENROUTER_MODEL || 'google/gemma-3-27b-it:free');
 
             return NextResponse.json(
                 {

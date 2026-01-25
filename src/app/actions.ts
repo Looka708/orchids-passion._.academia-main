@@ -135,6 +135,7 @@ Always refer to yourself as "Passion Support Bot".`;
 
         // Fallback sequence for best reliability
         const models = [
+            "google/gemma-3-27b-it:free",
             "deepseek/deepseek-r1:free",
             "google/gemini-2.0-flash-exp:free",
             "meta-llama/llama-3.3-70b-instruct:free"
