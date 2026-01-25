@@ -720,6 +720,88 @@ function MCQAdminContent() {
     URL.revokeObjectURL(url);
   }
 
+  function exportToCsv(data: MCQRecord[], filename: string) {
+    const headers = ["Chapter", "Question", "Option A", "Option B", "Option C", "Option D", "Correct Answer", "Language"];
+
+    const escapeCsv = (val: any) => {
+      if (val === null || val === undefined) return "";
+      let str = String(val);
+      if (str.includes('"') || str.includes(",") || str.includes("\n") || str.includes("\r")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const rows = data.map(mcq => [
+      escapeCsv(mcq.chapter),
+      escapeCsv(mcq.question_text),
+      escapeCsv(mcq.options[0]),
+      escapeCsv(mcq.options[1]),
+      escapeCsv(mcq.options[2]),
+      escapeCsv(mcq.options[3]),
+      escapeCsv(mcq.correct_answer),
+      escapeCsv(mcq.language)
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleExportMcqs() {
+    // If we have selected items, export those immediately (client-side)
+    if (selectedMcqs.size > 0) {
+      const dataToExport = mcqs.filter((mcq) => selectedMcqs.has(mcq.id));
+      exportToCsv(dataToExport, `mcqs_selected_${new Date().toISOString().split('T')[0]}.csv`);
+      toast({
+        title: "Success",
+        description: `Exported ${selectedMcqs.size} selected MCQs`,
+      });
+      return;
+    }
+
+    // Otherwise, use the API for potentially large exports
+    const params = new URLSearchParams();
+    if (selectedCourse) params.append("course_type", selectedCourse);
+    if (selectedSubject) params.append("subject", selectedSubject);
+    if (selectedChapter) params.append("chapter", selectedChapter);
+
+    toast({
+      title: "Preparing export",
+      description: "Fetching MCQs from server...",
+    });
+
+    try {
+      const response = await fetch(`/api/mcqs/export?${params}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const filename = `mcqs_export_${selectedSubject || 'all'}_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast({ title: "Success", description: "Export completed" });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Export failed");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to export MCQs",
+      });
+    }
+  }
+
   function toggleCourse(courseType: string) {
     setExpandedCourses((prev) => {
       const newSet = new Set(prev);
@@ -836,6 +918,14 @@ function MCQAdminContent() {
             <Button onClick={openBulkUploadDialog} className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700">
               <Upload className="mr-2 h-4 w-4" />
               Bulk Upload
+            </Button>
+            <Button
+              onClick={handleExportMcqs}
+              variant="outline"
+              className="border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/40"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export MCQs
             </Button>
             <Button onClick={openAddDialog} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700">
               <Plus className="mr-2 h-4 w-4" />
