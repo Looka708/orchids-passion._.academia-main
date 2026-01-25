@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      const options = [optionA, optionB, optionC, optionD].filter(Boolean);
+      const options = Array.from(new Set([optionA, optionB, optionC, optionD].filter(Boolean)));
       if (options.length < 2) {
         errors.push({ row: rowNum, error: 'At least 2 options are required' });
         continue;

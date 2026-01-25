@@ -56,11 +56,19 @@ export default function DynamicChapterTestPage() {
                 const mcqsData = await mcqsRes.json();
 
                 if (mcqsData.success) {
-                    const mappedMcqs: MCQ[] = mcqsData.mcqs.map((m: any) => ({
+                    // Deduplicate MCQs to clean up existing "old" duplicates
+                    const uniqueMcqs = mcqsData.mcqs.filter((mcq: any, index: number, self: any[]) =>
+                        index === self.findIndex((m) => (
+                            m.question_text === mcq.question_text &&
+                            JSON.stringify(m.options) === JSON.stringify(mcq.options)
+                        ))
+                    );
+
+                    const mappedMcqs: MCQ[] = uniqueMcqs.map((m: any) => ({
                         id: m.question_number,
                         questionText: m.question_text,
                         questionImage: m.question_image,
-                        options: m.options,
+                        options: Array.from(new Set(m.options)), // Deduplicate options for old MCQs
                         correctAnswer: m.correct_answer,
                         language: m.language
                     }));

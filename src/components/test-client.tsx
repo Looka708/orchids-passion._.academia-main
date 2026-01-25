@@ -56,8 +56,12 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
   const handleSubmit = useCallback(() => {
     let correctAnswers = 0;
     mcqs.forEach((mcq, index) => {
-      if (selectedAnswers[index] === mcq.correctAnswer) {
-        correctAnswers++;
+      const selectedIdx = selectedAnswers[index];
+      if (selectedIdx !== undefined) {
+        const selectedValue = getOptionValue(mcq.options[parseInt(selectedIdx)]);
+        if (selectedValue === mcq.correctAnswer) {
+          correctAnswers++;
+        }
       }
     });
     const finalScore = (correctAnswers / mcqs.length) * 100;
@@ -92,9 +96,27 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
 
   const startTest = () => {
     if (chapterMcqs.length > 0) {
-      const shuffled = [...chapterMcqs].sort(() => 0.5 - Math.random());
-      const selectedNumQuestions = Math.min(numQuestions, chapterMcqs.length);
-      setMcqs(shuffled.slice(0, selectedNumQuestions));
+      // Deduplicate questions by text and options
+      const uniqueSource = chapterMcqs.filter((mcq, index, self) =>
+        index === self.findIndex((m) => (
+          (m.questionText === mcq.questionText) &&
+          JSON.stringify(m.options) === JSON.stringify(mcq.options)
+        ))
+      );
+
+      const shuffled = [...uniqueSource].sort(() => 0.5 - Math.random());
+      const selectedNumQuestions = Math.min(numQuestions, shuffled.length);
+
+      // Clean up duplicate options within EACH question
+      const cleaned = shuffled.slice(0, selectedNumQuestions).map(mcq => ({
+        ...mcq,
+        options: Array.from(new Set(mcq.options.map(opt => typeof opt === 'string' ? opt : JSON.stringify(opt))))
+          .map(opt => {
+            try { return JSON.parse(opt); } catch (e) { return opt; }
+          })
+      }));
+
+      setMcqs(cleaned);
       setTestStarted(true);
       setCurrentQuestionIndex(0);
       setSelectedAnswers({});
@@ -214,13 +236,21 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
                   {mcq.questionText && <p className={cn("font-semibold", (mcq.language === 'urdu' || isUrdu(mcq.questionText)) ? 'font-urdu text-2xl text-right leading-relaxed mb-2' : '')}>{`${index + 1}. ${mcq.questionText}`}</p>}
 
                   <div className={cn("mt-2 text-sm space-y-1", (mcq.language === 'urdu' || isUrdu(mcq.questionText)) ? 'font-urdu text-xl text-right' : '')}>
-                    <p className={cn("flex items-center gap-2", (mcq.language === 'urdu' || isUrdu(mcq.questionText)) ? 'flex-row-reverse' : '', isCorrect ? 'text-green-600' : 'text-red-600')}>
-                      <span>{isUrdu(userAnswer) || mcq.language === 'urdu' ? 'آپ کا جواب:' : 'Your answer:'} {userAnswer || (mcq.language === 'urdu' ? "جواب نہیں دیا" : "Not answered")}</span>
-                      {isCorrect ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
-                    </p>
-                    {!isCorrect && <p className="text-green-600">
-                      {isUrdu(mcq.correctAnswer) || mcq.language === 'urdu' ? 'صحیح جواب:' : 'Correct answer:'} {mcq.correctAnswer}
-                    </p>}
+                    {(() => {
+                      const selectedIdx = selectedAnswers[index];
+                      const userAnswer = selectedIdx !== undefined ? getOptionValue(mcq.options[parseInt(selectedIdx)]) : "";
+                      return (
+                        <>
+                          <p className={cn("flex items-center gap-2", (mcq.language === 'urdu' || isUrdu(mcq.questionText)) ? 'flex-row-reverse' : '', isCorrect ? 'text-green-600' : 'text-red-600')}>
+                            <span>{isUrdu(userAnswer) || mcq.language === 'urdu' ? 'آپ کا جواب:' : 'Your answer:'} {userAnswer || (mcq.language === 'urdu' ? "جواب نہیں دیا" : "Not answered")}</span>
+                            {isCorrect ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+                          </p>
+                          {!isCorrect && <p className="text-green-600">
+                            {isUrdu(mcq.correctAnswer) || mcq.language === 'urdu' ? 'صحیح جواب:' : 'Correct answer:'} {mcq.correctAnswer}
+                          </p>}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               );
@@ -275,9 +305,10 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
               className="space-y-2"
             >
               <div className={cn("grid gap-4", currentMcq.options.some(opt => typeof opt !== 'string') ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : 'grid-cols-1')}>
-                {currentMcq.options.map((option) => {
-                  const optionValue = getOptionValue(option);
-                  const optionId = `${currentMcq.id}-${optionValue}`;
+                {currentMcq.options.map((option, idx) => {
+                  const optionIdxString = idx.toString();
+                  const optionId = `${currentMcq.id}-opt-${idx}`;
+                  const isOptionSelected = selectedAnswers[currentQuestionIndex] === optionIdxString;
                   const isOptionUrdu = typeof option === 'string' && isUrdu(option);
                   const isUrduMcq = currentMcq.language === 'urdu' || isUrdu(currentMcq.questionText);
 
@@ -286,11 +317,11 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
                       key={optionId}
                       className={cn(
                         "flex items-center rounded-md border border-input p-3 transition-all hover:bg-accent/50",
-                        selectedAnswers[currentQuestionIndex] === optionValue ? 'bg-primary/10 border-primary ring-1 ring-primary' : '',
+                        isOptionSelected ? 'bg-primary/10 border-primary ring-1 ring-primary' : '',
                         (isUrduMcq || isOptionUrdu) ? 'flex-row-reverse space-x-reverse' : ''
                       )}
                     >
-                      <RadioGroupItem value={optionValue} id={optionId} className={cn((isUrduMcq || isOptionUrdu) ? 'ml-2' : 'mr-2')} />
+                      <RadioGroupItem value={optionIdxString} id={optionId} className={cn((isUrduMcq || isOptionUrdu) ? 'ml-2' : 'mr-2')} />
                       <Label
                         htmlFor={optionId}
                         className={cn(

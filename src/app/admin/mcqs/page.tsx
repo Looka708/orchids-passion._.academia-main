@@ -354,7 +354,14 @@ function MCQAdminContent() {
       const response = await fetch(`/api/mcqs?${params}`);
       const data = await response.json();
       if (data.success) {
-        setMcqs(data.mcqs);
+        // Deduplicate MCQs by question text and options to clean up existing "old" duplicates
+        const uniqueMcqs = data.mcqs.filter((mcq: any, index: number, self: any[]) =>
+          index === self.findIndex((m) => (
+            m.question_text === mcq.question_text &&
+            JSON.stringify(m.options) === JSON.stringify(mcq.options)
+          ))
+        );
+        setMcqs(uniqueMcqs);
       }
     } catch (error) {
       console.error("Error fetching MCQs:", error);
@@ -370,12 +377,12 @@ function MCQAdminContent() {
 
   async function handleAddMcq() {
     try {
-      const options = [
+      const options = Array.from(new Set([
         formData.option_a,
         formData.option_b,
         formData.option_c,
         formData.option_d,
-      ].filter(Boolean);
+      ].filter(Boolean)));
 
       const response = await fetch("/api/mcqs", {
         method: "POST",
@@ -414,12 +421,12 @@ function MCQAdminContent() {
     if (!editingMcq) return;
 
     try {
-      const options = [
+      const options = Array.from(new Set([
         formData.option_a,
         formData.option_b,
         formData.option_c,
         formData.option_d,
-      ].filter(Boolean);
+      ].filter(Boolean)));
 
       const response = await fetch(`/api/mcqs/${editingMcq.id}`, {
         method: "PUT",
@@ -1130,7 +1137,7 @@ function MCQAdminContent() {
                                   {mcq.question_text || "(Image-based question)"}
                                 </p>
                                 <div className="mt-2 flex flex-wrap gap-1.5">
-                                  {mcq.options.slice(0, 4).map((opt, i) => (
+                                  {Array.from(new Set(mcq.options)).slice(0, 4).map((opt, i) => (
                                     <Badge
                                       key={i}
                                       variant={
@@ -1387,18 +1394,9 @@ function MCQAdminContent() {
                     <SelectValue placeholder="Select correct answer" />
                   </SelectTrigger>
                   <SelectContent>
-                    {formData.option_a && (
-                      <SelectItem value={formData.option_a}>A: {formData.option_a}</SelectItem>
-                    )}
-                    {formData.option_b && (
-                      <SelectItem value={formData.option_b}>B: {formData.option_b}</SelectItem>
-                    )}
-                    {formData.option_c && (
-                      <SelectItem value={formData.option_c}>C: {formData.option_c}</SelectItem>
-                    )}
-                    {formData.option_d && (
-                      <SelectItem value={formData.option_d}>D: {formData.option_d}</SelectItem>
-                    )}
+                    {Array.from(new Set([formData.option_a, formData.option_b, formData.option_c, formData.option_d].filter(Boolean))).map((opt, i) => (
+                      <SelectItem key={i} value={opt}>{opt}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1487,18 +1485,9 @@ function MCQAdminContent() {
                     <SelectValue placeholder="Select correct answer" />
                   </SelectTrigger>
                   <SelectContent>
-                    {formData.option_a && (
-                      <SelectItem value={formData.option_a}>A: {formData.option_a}</SelectItem>
-                    )}
-                    {formData.option_b && (
-                      <SelectItem value={formData.option_b}>B: {formData.option_b}</SelectItem>
-                    )}
-                    {formData.option_c && (
-                      <SelectItem value={formData.option_c}>C: {formData.option_c}</SelectItem>
-                    )}
-                    {formData.option_d && (
-                      <SelectItem value={formData.option_d}>D: {formData.option_d}</SelectItem>
-                    )}
+                    {Array.from(new Set([formData.option_a, formData.option_b, formData.option_c, formData.option_d].filter(Boolean))).map((opt, i) => (
+                      <SelectItem key={i} value={opt}>{opt}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

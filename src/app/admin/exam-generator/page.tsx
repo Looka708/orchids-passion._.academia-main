@@ -170,7 +170,16 @@ export default function ExamGeneratorPage() {
               combinedMcqs = [...combinedMcqs, ...mapped];
             }
           }
-          setAllAvailableMcqs(combinedMcqs);
+
+          // Deduplicate MCQs to handle existing "old" duplicates
+          const uniqueMcqs = combinedMcqs.filter((mcq, index, self) =>
+            index === self.findIndex((m) => (
+              m.questionText === mcq.questionText &&
+              JSON.stringify(m.options) === JSON.stringify(mcq.options)
+            ))
+          );
+
+          setAllAvailableMcqs(uniqueMcqs);
 
           // Note: In a real production app, you'd likely have a bulk API for this or fetch all at once
           // For now, we simulate fetching short/long questions or we could add specific APIs for them
