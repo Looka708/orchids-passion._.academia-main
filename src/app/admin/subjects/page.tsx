@@ -57,11 +57,13 @@ import {
     ArrowLeft,
     Loader2,
     Library,
+    Wand2,
+    CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 
-// Default fallback course types (same as in MCQs page)
+// Default fallback course types
 const DEFAULT_COURSE_TYPES = [
     "afns",
     "paf",
@@ -76,7 +78,7 @@ const DEFAULT_COURSE_TYPES = [
     "class-12",
 ];
 
-const COURSE_LABELS: Record<string, string> = {
+const INITIAL_COURSE_LABELS: Record<string, string> = {
     afns: "AFNS",
     paf: "PAF",
     mcj: "MCJ",
@@ -88,6 +90,17 @@ const COURSE_LABELS: Record<string, string> = {
     "class-10": "Class 10",
     "class-11": "Class 11",
     "class-12": "Class 12",
+};
+
+const STANDARD_SUBJECTS: Record<string, string[]> = {
+    academic: [
+        "Biology", "Chemistry", "Physics", "Mathematics", "Computer Science",
+        "English", "Urdu", "Islamiat", "Pakistan Studies"
+    ],
+    military: [
+        "Biology", "Chemistry", "Physics", "English", "General Knowledge",
+        "Intelligence (Verbal)", "Intelligence (Non-Verbal)"
+    ]
 };
 
 interface SubjectRecord {
@@ -103,7 +116,9 @@ export default function SubjectsManagementPage() {
     const [loading, setLoading] = useState(false);
     const [subjects, setSubjects] = useState<SubjectRecord[]>([]);
     const [availableCourseTypes, setAvailableCourseTypes] = useState<string[]>(DEFAULT_COURSE_TYPES);
+    const [courseLabels, setCourseLabels] = useState<Record<string, string>>(INITIAL_COURSE_LABELS);
     const [selectedCourse, setSelectedCourse] = useState<string>("");
+    const [isInitializing, setIsInitializing] = useState(false);
 
     // Dialog states
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -138,12 +153,12 @@ export default function SubjectsManagementPage() {
                 const allCourseTypes = Array.from(new Set([...DEFAULT_COURSE_TYPES, ...classSlugs]));
                 setAvailableCourseTypes(allCourseTypes);
 
-                // Update labels
+                // Update labels state
+                const newLabels = { ...INITIAL_COURSE_LABELS };
                 data.data.forEach((cls: any) => {
-                    if (!COURSE_LABELS[cls.slug]) {
-                        COURSE_LABELS[cls.slug] = cls.name;
-                    }
+                    newLabels[cls.slug] = cls.name;
                 });
+                setCourseLabels(newLabels);
             }
         } catch (error) {
             console.error("Error fetching available courses:", error);
@@ -171,7 +186,8 @@ export default function SubjectsManagementPage() {
         }
     }
 
-    const handleAddSubject = async () => {
+    const handleAddSubject = async (e?: React.FormEvent) => {
+        e?.preventDefault();
         if (!selectedCourse) {
             toast({ variant: "destructive", title: "Error", description: "Please select a course first." });
             return;
@@ -205,7 +221,44 @@ export default function SubjectsManagementPage() {
         }
     };
 
-    const handleUpdateSubject = async () => {
+    const handleInitializeStandard = async (type: 'academic' | 'military') => {
+        if (!selectedCourse) return;
+        setIsInitializing(true);
+        const subjectsToAdd = STANDARD_SUBJECTS[type];
+
+        try {
+            let successCount = 0;
+            for (const name of subjectsToAdd) {
+                // Check if already exists to avoid duplicates
+                if (subjects.some(s => s.subject_name.toLowerCase() === name.toLowerCase())) continue;
+
+                const response = await fetch("/api/subjects", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        subject_name: name,
+                        course_type: selectedCourse,
+                        description: `Default ${name} subject for ${courseLabels[selectedCourse]}`,
+                        icon_name: "BookOpen",
+                    }),
+                });
+                if (response.ok) successCount++;
+            }
+
+            toast({
+                title: "Initialization Complete",
+                description: `Successfully added ${successCount} standard subjects.`,
+            });
+            fetchSubjects();
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error", description: "Batch initialization failed." });
+        } finally {
+            setIsInitializing(false);
+        }
+    };
+
+    const handleUpdateSubject = async (e?: React.FormEvent) => {
+        e?.preventDefault();
         if (!editingSubject) return;
 
         try {
@@ -258,225 +311,283 @@ export default function SubjectsManagementPage() {
 
     return (
         <ProtectedRoute adminOnly={true}>
-            <div className="flex min-h-[calc(100vh-5rem)] flex-col bg-muted/40 p-4 md:p-8">
-                <div className="mx-auto w-full max-w-5xl space-y-6">
-                    <div className="flex items-center justify-between">
+            <div className="flex min-h-[calc(100vh-5rem)] flex-col bg-slate-50/50 dark:bg-slate-900/50 p-4 md:p-8">
+                <div className="mx-auto w-full max-w-6xl space-y-8">
+                    {/* Header */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <Button variant="ghost" size="icon" asChild>
-                                <Link href="/admin/mcqs">
-                                    <ArrowLeft className="h-5 w-5" />
+                            <Button variant="outline" size="icon" asChild className="rounded-full shadow-sm">
+                                <Link href="/admin">
+                                    <ArrowLeft className="h-4 w-4" />
                                 </Link>
                             </Button>
                             <div>
-                                <h1 className="text-3xl font-bold tracking-tight">Subjects Management</h1>
-                                <p className="text-muted-foreground">Manage subjects for each course type.</p>
+                                <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                                    Subject Management
+                                </h1>
+                                <p className="text-muted-foreground mt-1">Configure subjects for each course and class.</p>
                             </div>
                         </div>
                     </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Select Course</CardTitle>
-                            <CardDescription>Choose a course to manage its subjects.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center gap-4">
-                                <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-                                    <SelectTrigger className="w-[300px]">
-                                        <SelectValue placeholder="Select Course" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {availableCourseTypes.map((type) => (
-                                            <SelectItem key={type} value={type}>
-                                                {COURSE_LABELS[type] || type.toUpperCase()}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {selectedCourse && (
-                                    <Button onClick={() => {
-                                        setFormData({ subject_name: "", description: "", icon_name: "BookOpen" });
-                                        setIsAddDialogOpen(true);
-                                    }} className="ml-auto">
-                                        <Plus className="mr-2 h-4 w-4" /> Add Subject
-                                    </Button>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {selectedCourse && (
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <CardTitle>Subjects for {COURSE_LABELS[selectedCourse] || selectedCourse.toUpperCase()}</CardTitle>
-                                        <CardDescription>
-                                            {subjects.length} subjects found.
-                                        </CardDescription>
-                                    </div>
-                                </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                        {/* Sidebar - Course Selection */}
+                        <Card className="lg:col-span-1 border-0 shadow-lg h-fit sticky top-8">
+                            <CardHeader className="bg-slate-50 dark:bg-slate-800 border-b">
+                                <CardTitle className="text-lg">Select Course</CardTitle>
+                                <CardDescription>Choose a class to manage</CardDescription>
                             </CardHeader>
-                            <CardContent>
-                                {loading ? (
-                                    <div className="flex justify-center py-8">
-                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                    </div>
-                                ) : subjects.length === 0 ? (
-                                    <div className="text-center py-8 text-muted-foreground">
-                                        <Library className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                                        <p>No subjects found for this course.</p>
-                                        <p className="text-sm">Click "Add Subject" to create one.</p>
-                                    </div>
-                                ) : (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Name</TableHead>
-                                                <TableHead>Description</TableHead>
-                                                <TableHead>Icon</TableHead>
-                                                <TableHead className="text-right">Actions</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {subjects.map((subject) => (
-                                                <TableRow key={subject.id}>
-                                                    <TableCell className="font-medium capitalize">{subject.subject_name}</TableCell>
-                                                    <TableCell className="text-muted-foreground">{subject.description || "-"}</TableCell>
-                                                    <TableCell className="font-mono text-xs">{subject.icon_name}</TableCell>
-                                                    <TableCell className="text-right">
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => openEditDialog(subject)}
-                                                            >
-                                                                <Pencil className="h-4 w-4 text-blue-500" />
-                                                            </Button>
-                                                            <AlertDialog>
-                                                                <AlertDialogTrigger asChild>
-                                                                    <Button variant="ghost" size="icon">
-                                                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                                                    </Button>
-                                                                </AlertDialogTrigger>
-                                                                <AlertDialogContent>
-                                                                    <AlertDialogHeader>
-                                                                        <AlertDialogTitle>Delete Subject?</AlertDialogTitle>
-                                                                        <AlertDialogDescription>
-                                                                            Are you sure you want to delete <strong>{subject.subject_name}</strong>?
-                                                                            This action cannot be undone.
-                                                                        </AlertDialogDescription>
-                                                                    </AlertDialogHeader>
-                                                                    <AlertDialogFooter>
-                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                        <AlertDialogAction
-                                                                            onClick={() => handleDeleteSubject(subject.id)}
-                                                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                                                        >
-                                                                            Delete
-                                                                        </AlertDialogAction>
-                                                                    </AlertDialogFooter>
-                                                                </AlertDialogContent>
-                                                            </AlertDialog>
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
+                            <CardContent className="pt-6">
+                                <div className="space-y-4">
+                                    <Label>Course Type</Label>
+                                    <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Pick a class..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {availableCourseTypes.map((type) => (
+                                                <SelectItem key={type} value={type}>
+                                                    {courseLabels[type] || type.toUpperCase()}
+                                                </SelectItem>
                                             ))}
-                                        </TableBody>
-                                    </Table>
-                                )}
+                                        </SelectContent>
+                                    </Select>
+
+                                    {selectedCourse && (
+                                        <div className="pt-4 border-t mt-4">
+                                            <Button
+                                                onClick={() => {
+                                                    setFormData({ subject_name: "", description: "", icon_name: "BookOpen" });
+                                                    setIsAddDialogOpen(true);
+                                                }}
+                                                className="w-full bg-indigo-600 hover:bg-indigo-700"
+                                            >
+                                                <Plus className="mr-2 h-4 w-4" /> Add Subject
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
-                    )}
 
-                    {/* ADD DIALOG */}
-                    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                        <DialogContent>
+                        {/* Main Content - Subjects Table */}
+                        <div className="lg:col-span-3 space-y-6">
+                            {!selectedCourse ? (
+                                <Card className="border-dashed border-2 bg-transparent">
+                                    <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
+                                        <Library className="h-12 w-12 mb-4 opacity-20" />
+                                        <h3 className="text-xl font-semibold text-foreground">No Course Selected</h3>
+                                        <p className="max-w-xs mt-2">Please select a course from the sidebar to view and manage its subjects.</p>
+                                    </div>
+                                </Card>
+                            ) : (
+                                <Card className="border-0 shadow-lg overflow-hidden">
+                                    <CardHeader className="bg-slate-50 dark:bg-slate-800 border-b flex flex-row items-center justify-between">
+                                        <div>
+                                            <CardTitle className="text-xl flex items-center gap-2">
+                                                <BookOpen className="h-5 w-5 text-indigo-500" />
+                                                {courseLabels[selectedCourse] || selectedCourse.toUpperCase()} Subjects
+                                            </CardTitle>
+                                            <CardDescription>
+                                                {subjects.length} subjects configured for this course.
+                                            </CardDescription>
+                                        </div>
+                                        {subjects.length === 0 && (
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    onClick={() => handleInitializeStandard(selectedCourse.includes('class') ? 'academic' : 'military')}
+                                                    disabled={isInitializing}
+                                                    className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300"
+                                                >
+                                                    {isInitializing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Wand2 className="h-4 w-4 mr-2" />}
+                                                    Quick Setup
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </CardHeader>
+                                    <CardContent className="pt-6">
+                                        {loading ? (
+                                            <div className="flex flex-col items-center justify-center py-20 gap-4">
+                                                <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
+                                                <p className="text-muted-foreground animate-pulse text-sm">Loading subject data...</p>
+                                            </div>
+                                        ) : subjects.length === 0 ? (
+                                            <div className="text-center py-16 space-y-6">
+                                                <div className="mx-auto w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
+                                                    <Library className="h-10 w-10 text-slate-400" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <h3 className="text-lg font-bold">This course is empty</h3>
+                                                    <p className="text-muted-foreground max-w-sm mx-auto">
+                                                        You haven't added any subjects to <b>{courseLabels[selectedCourse]}</b> yet.
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-wrap items-center justify-center gap-4">
+                                                    <Button variant="default" onClick={() => setIsAddDialogOpen(true)}>
+                                                        <Plus className="mr-2 h-4 w-4" /> Add One Manually
+                                                    </Button>
+                                                    <div className="relative">
+                                                        <div className="absolute inset-0 flex items-center"><span className="w-full border-t"></span></div>
+                                                        <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-muted-foreground dark:bg-slate-950">OR</span></div>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <Button variant="outline" size="sm" onClick={() => handleInitializeStandard('academic')}>
+                                                            <Wand2 className="mr-2 h-4 w-4" /> Academic Set
+                                                        </Button>
+                                                        <Button variant="outline" size="sm" onClick={() => handleInitializeStandard('military')}>
+                                                            <Wand2 className="mr-2 h-4 w-4" /> Military Set
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="rounded-md border border-slate-200 dark:border-slate-800">
+                                                <Table>
+                                                    <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50">
+                                                        <TableRow>
+                                                            <TableHead>Subject Name</TableHead>
+                                                            <TableHead className="hidden md:table-cell">Description</TableHead>
+                                                            <TableHead>Icon</TableHead>
+                                                            <TableHead className="text-right">Actions</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {subjects.map((subject) => (
+                                                            <TableRow key={subject.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                                <TableCell className="font-semibold text-indigo-600 dark:text-indigo-400 capitalize">
+                                                                    {subject.subject_name}
+                                                                </TableCell>
+                                                                <TableCell className="text-muted-foreground text-sm max-w-xs truncate hidden md:table-cell">
+                                                                    {subject.description || "-"}
+                                                                </TableCell>
+                                                                <TableCell className="font-mono text-[10px] text-slate-500">
+                                                                    <Badge variant="outline" className="font-mono">{subject.icon_name || "BookOpen"}</Badge>
+                                                                </TableCell>
+                                                                <TableCell className="text-right">
+                                                                    <div className="flex items-center justify-end gap-1">
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            onClick={() => openEditDialog(subject)}
+                                                                            className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                                                        >
+                                                                            <Pencil className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <AlertDialog>
+                                                                            <AlertDialogTrigger asChild>
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    size="icon"
+                                                                                    className="h-8 w-8 text-destructive hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                                                >
+                                                                                    <Trash2 className="h-4 w-4" />
+                                                                                </Button>
+                                                                            </AlertDialogTrigger>
+                                                                            <AlertDialogContent>
+                                                                                <AlertDialogHeader>
+                                                                                    <AlertDialogTitle>Delete Subject?</AlertDialogTitle>
+                                                                                    <AlertDialogDescription>
+                                                                                        Permanently delete <b>{subject.subject_name}</b>? This will also disconnect any MCQs related to this subject (but not delete them).
+                                                                                    </AlertDialogDescription>
+                                                                                </AlertDialogHeader>
+                                                                                <AlertDialogFooter>
+                                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                                    <AlertDialogAction
+                                                                                        onClick={() => handleDeleteSubject(subject.id)}
+                                                                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                                                    >
+                                                                                        Delete
+                                                                                    </AlertDialogAction>
+                                                                                </AlertDialogFooter>
+                                                                            </AlertDialogContent>
+                                                                        </AlertDialog>
+                                                                    </div>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* ADD/EDIT DIALOG */}
+                    <Dialog open={isAddDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
+                        if (!open) {
+                            setIsAddDialogOpen(false);
+                            setIsEditDialogOpen(false);
+                            setEditingSubject(null);
+                        }
+                    }}>
+                        <DialogContent className="sm:max-w-[425px]">
                             <DialogHeader>
-                                <DialogTitle>Add New Subject</DialogTitle>
+                                <DialogTitle className="flex items-center gap-2">
+                                    <div className={`p-2 rounded-lg ${isEditDialogOpen ? 'bg-blue-500/10 text-blue-500' : 'bg-green-500/10 text-green-500'}`}>
+                                        {isEditDialogOpen ? <Pencil className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                                    </div>
+                                    {isEditDialogOpen ? "Edit Subject" : "Add New Subject"}
+                                </DialogTitle>
                                 <DialogDescription>
-                                    Create a new subject for {COURSE_LABELS[selectedCourse] || selectedCourse}.
+                                    Set up the subject details for <b>{courseLabels[selectedCourse]}</b>.
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="grid gap-4 py-4">
+                            <form onSubmit={isEditDialogOpen ? handleUpdateSubject : handleAddSubject} className="grid gap-6 py-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="name">Subject Name</Label>
+                                    <Label htmlFor="name" className="text-sm font-semibold">Subject Name</Label>
                                     <Input
                                         id="name"
                                         value={formData.subject_name}
                                         onChange={(e) => setFormData({ ...formData, subject_name: e.target.value })}
                                         placeholder="e.g. Mathematics"
+                                        className="h-11 shadow-sm"
+                                        required
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="desc">Description</Label>
+                                    <Label htmlFor="desc" className="text-sm font-semibold">Description (Optional)</Label>
                                     <Textarea
                                         id="desc"
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        placeholder="Brief description..."
+                                        placeholder="Briefly describe what this subject covers..."
+                                        rows={3}
+                                        className="shadow-sm resize-none"
                                     />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="icon">Icon Name (Lucide React)</Label>
-                                    <Input
-                                        id="icon"
-                                        value={formData.icon_name}
-                                        onChange={(e) => setFormData({ ...formData, icon_name: e.target.value })}
-                                        placeholder="e.g. Brain, FlaskConical, etc."
-                                    />
-                                    <p className="text-xs text-muted-foreground">Internal icon name used for display.</p>
+                                    <Label htmlFor="icon" className="text-sm font-semibold">Icon Identifier</Label>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            id="icon"
+                                            value={formData.icon_name}
+                                            onChange={(e) => setFormData({ ...formData, icon_name: e.target.value })}
+                                            placeholder="BookOpen"
+                                            className="h-11 shadow-sm font-mono text-xs"
+                                        />
+                                        <div className="h-11 w-11 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border shadow-sm">
+                                            <BookOpen className="h-5 w-5 text-indigo-500" />
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground">Internal name for library mapping (e.g., FlaskConical, Brain, Atom)</p>
                                 </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                                <Button onClick={handleAddSubject}>Create Subject</Button>
-                            </DialogFooter>
+                                <DialogFooter className="pt-4 border-t gap-2">
+                                    <Button type="button" variant="ghost" onClick={() => {
+                                        setIsAddDialogOpen(false);
+                                        setIsEditDialogOpen(false);
+                                    }}>Cancel</Button>
+                                    <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 px-8">
+                                        {isEditDialogOpen ? "Save Changes" : "Create Subject"}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
                         </DialogContent>
                     </Dialog>
-
-                    {/* EDIT DIALOG */}
-                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Edit Subject</DialogTitle>
-                                <DialogDescription>
-                                    Update details for {editingSubject?.subject_name}.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="edit-name">Subject Name</Label>
-                                    <Input
-                                        id="edit-name"
-                                        value={formData.subject_name}
-                                        onChange={(e) => setFormData({ ...formData, subject_name: e.target.value })}
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="edit-desc">Description</Label>
-                                    <Textarea
-                                        id="edit-desc"
-                                        value={formData.description}
-                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="edit-icon">Icon Name</Label>
-                                    <Input
-                                        id="edit-icon"
-                                        value={formData.icon_name}
-                                        onChange={(e) => setFormData({ ...formData, icon_name: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-                                <Button onClick={handleUpdateSubject}>Save Changes</Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-
                 </div>
             </div>
         </ProtectedRoute>

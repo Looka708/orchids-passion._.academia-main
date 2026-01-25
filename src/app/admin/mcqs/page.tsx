@@ -131,19 +131,12 @@ const DEFAULT_COURSE_TYPES = [
   "class-12",
 ];
 
-const SUBJECTS = [
-  "biology",
-  "chemistry",
-  "physics",
-  "mathematics",
-  "english",
-  "urdu",
-  "computer",
-  "general-science",
-  "general-knowledge",
-  "verbal-test",
-  "non-verbal-test",
-];
+// Dynamic subjects based on selected course
+interface SubjectItem {
+  id: string;
+  subject_name: string;
+}
+
 
 const COURSE_LABELS: Record<string, string> = {
   afns: "AFNS",
@@ -221,6 +214,9 @@ function MCQAdminContent() {
     errors?: Array<{ row: number; error: string }>;
   } | null>(null);
 
+  const [dynamicSubjects, setDynamicSubjects] = useState<SubjectItem[]>([]);
+  const [bulkDynamicSubjects, setBulkDynamicSubjects] = useState<SubjectItem[]>([]);
+
   const [formData, setFormData] = useState({
     course_type: "",
     subject: "",
@@ -233,6 +229,45 @@ function MCQAdminContent() {
     correct_answer: "",
     language: "english",
   });
+
+  // Fetch subjects when course type changes in Add/Edit dialog
+  useEffect(() => {
+    if (formData.course_type) {
+      fetch(`/api/subjects?course_type=${formData.course_type}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setDynamicSubjects(data.data.map((s: any) => ({
+              id: s.id,
+              subject_name: s.subject_name
+            })));
+          }
+        })
+        .catch(err => console.error("Error fetching subjects:", err));
+    } else {
+      setDynamicSubjects([]);
+    }
+  }, [formData.course_type]);
+
+  // Fetch subjects when course type changes in Bulk Upload dialog
+  useEffect(() => {
+    if (bulkUploadCourse) {
+      fetch(`/api/subjects?course_type=${bulkUploadCourse}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setBulkDynamicSubjects(data.data.map((s: any) => ({
+              id: s.id,
+              subject_name: s.subject_name
+            })));
+          }
+        })
+        .catch(err => console.error("Error fetching bulk subjects:", err));
+    } else {
+      setBulkDynamicSubjects([]);
+    }
+  }, [bulkUploadCourse]);
+
 
   useEffect(() => {
     fetchAvailableClasses();
@@ -319,11 +354,33 @@ function MCQAdminContent() {
 
   async function fetchStructure() {
     try {
-      const response = await fetch("/api/mcqs/structure");
-      const data = await response.json();
-      if (data.success) {
-        setStructure(data.structure);
-        const total = data.structure.reduce(
+      // Fetch both MCQ structure and all classes in parallel
+      const [structureRes, classesRes] = await Promise.all([
+        fetch("/api/mcqs/structure"),
+        fetch("/api/classes")
+      ]);
+
+      const structureData = await structureRes.json();
+      const classesData = await classesRes.json();
+
+      if (structureData.success) {
+        let finalStructure = [...structureData.structure];
+
+        // If we have all classes, find those missing from MCQ structure (ones with 0 MCQs)
+        if (classesData.success && classesData.data) {
+          classesData.data.forEach((cls: any) => {
+            const exists = finalStructure.find(s => s.course_type === cls.slug);
+            if (!exists) {
+              finalStructure.push({
+                course_type: cls.slug,
+                subjects: []
+              });
+            }
+          });
+        }
+
+        setStructure(finalStructure);
+        const total = finalStructure.reduce(
           (acc: number, course: CourseStructure) =>
             acc +
             course.subjects.reduce(
@@ -338,6 +395,7 @@ function MCQAdminContent() {
       console.error("Error fetching structure:", error);
     }
   }
+
 
   async function fetchMcqs() {
     if (!selectedCourse || !selectedSubject) return;
@@ -1411,12 +1469,17 @@ function MCQAdminContent() {
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      {SUBJECTS.map((s) => (
-                        <SelectItem key={s} value={s} className="capitalize">
-                          {s.replace("-", " ")}
-                        </SelectItem>
-                      ))}
+                      {dynamicSubjects.length > 0 ? (
+                        dynamicSubjects.map((s) => (
+                          <SelectItem key={s.id} value={s.subject_name.toLowerCase()} className="capitalize">
+                            {s.subject_name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-2 text-xs text-muted-foreground">No subjects found. Add them in Manage Subjects.</div>
+                      )}
                     </SelectContent>
+
                   </Select>
                 </div>
                 <div className="space-y-2">
@@ -1688,12 +1751,17 @@ function MCQAdminContent() {
                       <SelectValue placeholder="Select subject" />
                     </SelectTrigger>
                     <SelectContent>
-                      {SUBJECTS.map((s) => (
-                        <SelectItem key={s} value={s} className="capitalize">
-                          {s.replace("-", " ")}
-                        </SelectItem>
-                      ))}
+                      {bulkDynamicSubjects.length > 0 ? (
+                        bulkDynamicSubjects.map((s) => (
+                          <SelectItem key={s.id} value={s.subject_name.toLowerCase()} className="capitalize">
+                            {s.subject_name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-2 text-xs text-muted-foreground">No subjects found.</div>
+                      )}
                     </SelectContent>
+
                   </Select>
                 </div>
               </div>
