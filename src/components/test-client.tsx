@@ -53,13 +53,17 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
   const [timeLeft, setTimeLeft] = useState(17);
 
   // Define functions before useEffect
+  const normalizeAnswer = (text: string | null | undefined) => {
+    return text?.toString().trim().toLowerCase() || '';
+  };
+
   const handleSubmit = useCallback(() => {
     let correctAnswers = 0;
     mcqs.forEach((mcq, index) => {
       const selectedIdx = selectedAnswers[index];
       if (selectedIdx !== undefined) {
         const selectedValue = getOptionValue(mcq.options[parseInt(selectedIdx)]);
-        if (selectedValue === mcq.correctAnswer) {
+        if (normalizeAnswer(selectedValue) === normalizeAnswer(mcq.correctAnswer)) {
           correctAnswers++;
         }
       }
@@ -226,7 +230,9 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
             </div>
             {mcqs.map((mcq, index) => {
               const userAnswer = selectedAnswers[index];
-              const isCorrect = userAnswer === mcq.correctAnswer;
+              // Use normalizeAnswer inside the rendering loop comparison as well
+              const userAnswerValue = userAnswer !== undefined ? getOptionValue(mcq.options[parseInt(userAnswer)]) : "";
+              const isCorrect = normalizeAnswer(userAnswerValue) === normalizeAnswer(mcq.correctAnswer);
 
               return (
                 <div key={mcq.id} className="border p-4 rounded-md">
