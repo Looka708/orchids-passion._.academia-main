@@ -195,19 +195,28 @@ export async function updateStreak(userId: string): Promise<number> {
 
     const now = new Date();
     const lastActive = progress.lastActive;
-    const hoursSinceLastActive = (now.getTime() - lastActive.getTime()) / (1000 * 60 * 60);
+
+    // Normalize dates to compare just the date part (ignore time)
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastActiveDate = new Date(lastActive.getFullYear(), lastActive.getMonth(), lastActive.getDate());
+
+    const daysDiff = Math.floor((today.getTime() - lastActiveDate.getTime()) / (1000 * 60 * 60 * 24));
 
     let newStreak = progress.streak;
 
-    if (hoursSinceLastActive < 24) {
-        // Same day, no change
+    if (daysDiff === 0) {
+        // Same day - already counted, just update lastActive
+        const progressRef = doc(db, 'users', userId, 'progress', 'current');
+        await updateDoc(progressRef, {
+            lastActive: serverTimestamp()
+        });
         return newStreak;
-    } else if (hoursSinceLastActive < 48) {
-        // Next day, increment streak
+    } else if (daysDiff === 1) {
+        // Next day (yesterday was last active) - increment streak
         newStreak += 1;
-        await awardXP(userId, 5, 'streak', { streakDays: newStreak });
+        await awardXP(userId, 5 + (newStreak >= 7 ? 10 : 0), 'streak', { streakDays: newStreak });
     } else {
-        // Streak broken
+        // Streak broken (more than 1 day gap) - reset to 1
         newStreak = 1;
     }
 

@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, CheckCircle2, XCircle, Trophy, Flame, Sparkles } from "lucide-react";
 import { DailyQuizQuestion, DailyQuizSession } from "@/lib/types/progress";
 import { useAuth } from "@/hooks/useAuth";
-import { awardXP, updateUserStats, getUserProgress } from "@/lib/progress/progressService";
+import { awardXP, updateUserStats, getUserProgress, updateStreak } from "@/lib/progress/progressService";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 
@@ -18,7 +18,7 @@ interface DailyQuizModalProps {
 }
 
 export default function DailyQuizModal({ open, onOpenChange, onComplete }: DailyQuizModalProps) {
-    const { firebaseUser } = useAuth();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [questions, setQuestions] = useState<DailyQuizQuestion[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -36,7 +36,7 @@ export default function DailyQuizModal({ open, onOpenChange, onComplete }: Daily
             const response = await fetch('/api/generate-daily-quiz', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: firebaseUser?.uid })
+                body: JSON.stringify({ userId: user?.email })
             });
 
             if (!response.ok) {
@@ -52,15 +52,15 @@ export default function DailyQuizModal({ open, onOpenChange, onComplete }: Daily
         } finally {
             setLoading(false);
         }
-    }, [firebaseUser?.uid, onOpenChange]);
+    }, [user?.email, onOpenChange]);
 
     // Check if quiz was already completed today
     useEffect(() => {
         async function checkDailyQuizCompletion() {
-            if (open && firebaseUser?.uid) {
+            if (open && user?.email) {
                 setCheckingCompletion(true);
                 try {
-                    const progress = await getUserProgress(firebaseUser.uid);
+                    const progress = await getUserProgress(user.email);
                     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
                     if (progress?.lastDailyQuizDate === today) {
@@ -82,7 +82,7 @@ export default function DailyQuizModal({ open, onOpenChange, onComplete }: Daily
         if (open) {
             checkDailyQuizCompletion();
         }
-    }, [open, firebaseUser?.uid, questions.length, generateQuiz]);
+    }, [open, user?.email, questions.length, generateQuiz]);
 
     const handleAnswerSelect = (answer: string) => {
         if (!showResult) {
@@ -133,21 +133,26 @@ export default function DailyQuizModal({ open, onOpenChange, onComplete }: Daily
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
         try {
-            if (firebaseUser?.uid) {
-                await awardXP(firebaseUser.uid, xpEarned, 'daily_quiz', {
+            if (user?.email) {
+                await awardXP(user.email, xpEarned, 'daily_quiz', {
                     score: finalScore,
                     questionsAnswered: questions.length,
                     correctAnswers
                 });
 
-                await updateUserStats(firebaseUser.uid, {
+                await updateUserStats(user.email, {
                     questionsAnswered: questions.length,
                     correctAnswers: correctAnswers,
                     quizzesCompleted: 1
                 });
 
+                // Update streak if score >= 30%
+                if (finalScore >= 30) {
+                    await updateStreak(user.email);
+                }
+
                 // Update lastDailyQuizDate to prevent multiple attempts today
-                const progressRef = doc(db, 'users', firebaseUser.uid, 'progress', 'current');
+                const progressRef = doc(db, 'users', user.email, 'progress', 'current');
                 await updateDoc(progressRef, {
                     lastDailyQuizDate: today
                 });

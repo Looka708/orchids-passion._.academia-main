@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import Confetti from "./confetti";
 import VideoSuggestionWrapper from "./video/VideoSuggestionWrapper";
 import { useAuth } from "@/hooks/useAuth";
-import { awardXP, updateUserStats } from "@/lib/progress/progressService";
+import { awardXP, updateUserStats, updateStreak } from "@/lib/progress/progressService";
 
 const isUrdu = (text: string | null | undefined) => /[\u0600-\u06FF]/.test(text || "");
 
@@ -37,7 +37,7 @@ interface TestClientProps {
 
 
 export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, basePath, showVideoSuggestions = true }: TestClientProps) {
-  const { firebaseUser } = useAuth();
+  const { user } = useAuth();
   const [testStarted, setTestStarted] = useState(false);
   const [numQuestions, setNumQuestions] = useState(0);
   const [mcqs, setMcqs] = useState<MCQ[]>([]);
@@ -83,30 +83,36 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
     }
     setSubmitted(true);
 
-    // Award XP to authenticated users
+    // Award XP to authenticated users (use email as userId to match useProgress hook)
     const earnedXP = correctAnswers * 5; // 5 XP per correct answer
     setXpAwarded(earnedXP);
 
-    if (firebaseUser?.uid && earnedXP > 0) {
+    if (user?.email && earnedXP > 0) {
       try {
-        await awardXP(firebaseUser.uid, earnedXP, 'quiz', {
+        await awardXP(user.email, earnedXP, 'quiz', {
           subject,
           chapter: chapterTitle,
           score: finalScore,
           questionsAnswered: mcqs.length,
           correctAnswers
         });
-        await updateUserStats(firebaseUser.uid, {
+        await updateUserStats(user.email, {
           questionsAnswered: mcqs.length,
           correctAnswers: correctAnswers,
           quizzesCompleted: 1,
           perfectScores: finalScore === 100 ? 1 : 0
         });
+
+        // Update streak if score >= 30%
+        if (finalScore >= 30) {
+          await updateStreak(user.email);
+        }
       } catch (error) {
         console.error('Error awarding XP:', error);
       }
     }
-  }, [mcqs, selectedAnswers, firebaseUser, subject, chapterTitle]);
+  }, [mcqs, selectedAnswers, user, subject, chapterTitle]);
+
 
   const handleNext = useCallback(() => {
     if (currentQuestionIndex < mcqs.length - 1) {
