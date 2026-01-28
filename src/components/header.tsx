@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Logo from "./logo";
-import { Menu, Search, ChevronDown, LogOut } from "lucide-react";
+import { Menu, Search, ChevronDown, LogOut, LayoutDashboard, Shield, Zap, BookOpen } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -18,7 +18,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Accordion,
   AccordionContent,
@@ -264,13 +267,10 @@ export default function Header() {
           <ThemeToggle />
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
-              <Button asChild variant="outline">
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
               {/* Streak Fire Icon */}
               <button
                 onClick={() => setQuizModalOpen(true)}
-                className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/40 dark:to-red-900/40 rounded-full border border-orange-300 dark:border-orange-700 hover:shadow-md transition-all cursor-pointer"
+                className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/40 dark:to-red-900/40 rounded-full border border-orange-300 dark:border-orange-700 hover:shadow-md transition-all cursor-pointer mr-2"
                 title={streak > 0
                   ? `🔥 ${streak} day streak! Click to take daily quiz.`
                   : `🔥 Start your streak! Click to take daily quiz.`
@@ -281,19 +281,65 @@ export default function Header() {
                   {streak}
                 </span>
               </button>
-              {(user?.role === 'owner' || user?.role === 'admin') && (
-                <>
-                  <Button asChild variant="outline">
-                    <Link href="/admin">Admin</Link>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-10 w-10 border-2 border-primary/20 hover:border-primary transition-colors">
+                      <AvatarImage src={user?.photoURL} alt={user?.name || "User"} />
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                   </Button>
-                  <Button asChild>
-                    <Link href="/admin/exam-generator">Exam Generator</Link>
-                  </Button>
-                </>
-              )}
-              <Button onClick={logout} variant="ghost" size="icon" aria-label="Sign out">
-                <LogOut className="h-5 w-5" />
-              </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user?.name || "User"}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="cursor-pointer">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setQuizModalOpen(true)} className="cursor-pointer">
+                    <Zap className="mr-2 h-4 w-4" />
+                    Daily Quiz
+                  </DropdownMenuItem>
+
+                  {(user?.role === 'owner' || user?.role === 'admin') && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Admin</DropdownMenuLabel>
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="cursor-pointer">
+                          <Shield className="mr-2 h-4 w-4" />
+                          Admin Console
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/exam-generator" className="cursor-pointer">
+                          <BookOpen className="mr-2 h-4 w-4" />
+                          Exam Generator
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <Button asChild>

@@ -98,7 +98,7 @@ export function ProfileEditor({ user, badges = [], userLevel = 1, onUpdate }: Pr
                                     <Avatar className="h-24 w-24">
                                         <AvatarImage src={formData.photoURL} alt={formData.name} />
                                         <AvatarFallback className="text-2xl">
-                                            {formData.name.charAt(0).toUpperCase()}
+                                            {(formData.name || user.email || "U").charAt(0).toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="w-full">

@@ -14,7 +14,6 @@ import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 import TourDriver from "@/components/onboarding/TourDriver";
 import QuickStart from "@/components/dashboard/QuickStart";
 import { useState } from "react";
-import { ProfileLogo } from "@/components/profile/ProfileLogo";
 
 export default function DashboardPage() {
     const { isAuthenticated, user, firebaseUser, isLoading: authLoading, refreshUser, emailVerified } = useAuth();
@@ -162,64 +161,60 @@ export default function DashboardPage() {
                     <Button variant="ghost" asChild>
                         <Link href="/">
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Return to Learning
+                            Back to Home
                         </Link>
                     </Button>
+                    <div id="user-menu">
+                        {/* Placeholder for user menu target */}
+                    </div>
                 </div>
 
-                <div className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-6 p-6 rounded-lg shadow-sm border bg-card relative overflow-hidden">
-                    {/* Decorative background element */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-
-                    <Avatar className="h-32 w-32 border-4 border-background shadow-xl z-10">
+                <div className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-6 p-6 rounded-lg shadow-sm border bg-card">
+                    <Avatar className="h-24 w-24">
                         <AvatarImage src={user?.photoURL} />
-                        <AvatarFallback className="text-4xl">{user?.name?.charAt(0).toUpperCase() || 'S'}</AvatarFallback>
+                        <AvatarFallback className="text-2xl">{(user?.name || user?.email || "S").charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
 
-                    <div className="flex-1 space-y-2 z-10">
+                    <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-3 flex-wrap">
-                            <h1 className="text-4xl font-bold tracking-tight">
+                            <h1 className="text-3xl font-bold">
                                 {user?.name || 'Student'}
                             </h1>
                             {equippedBadge && (
-                                <div className="flex items-center gap-1 px-3 py-1 bg-primary/10 rounded-full text-sm font-medium text-primary shadow-sm" title={equippedBadge.name}>
+                                <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-full text-xs font-medium text-primary" title={equippedBadge.name}>
                                     <span>{equippedBadge.icon}</span>
                                     <span>{equippedBadge.name}</span>
                                 </div>
                             )}
                             {user?.role === 'owner' && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                     👑 Owner
                                 </span>
                             )}
                             {user?.role === 'admin' && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                     🛡️ Admin
                                 </span>
                             )}
                         </div>
 
                         {user?.bio && (
-                            <p className="text-muted-foreground max-w-2xl text-lg">
+                            <p className="text-muted-foreground max-w-2xl">
                                 {user.bio}
                             </p>
                         )}
 
-                        <div className="flex items-center gap-6 pt-4">
-                            <div className="flex flex-col">
-                                <span className="text-2xl font-bold">{displayProgress!.level}</span>
-                                <span className="text-xs text-muted-foreground uppercase tracking-wider">Level</span>
+                        <div className="flex items-center gap-4 pt-2">
+                            <div className="text-sm text-muted-foreground">
+                                <span className="font-medium text-foreground">{displayProgress!.level}</span> Level
                             </div>
-                            <div className="w-px h-10 bg-border"></div>
-                            <div className="flex flex-col">
-                                <span className="text-2xl font-bold">{displayProgress!.totalXP.toLocaleString()}</span>
-                                <span className="text-xs text-muted-foreground uppercase tracking-wider">Total XP</span>
+                            <div className="text-sm text-muted-foreground">
+                                <span className="font-medium text-foreground">{displayProgress!.totalXP.toLocaleString()}</span> XP
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex flex-col items-center gap-4 z-10">
-                        <ProfileLogo size={100} />
+                    <div className="flex-shrink-0">
                         {user && (
                             <ProfileEditor
                                 user={user}
@@ -231,7 +226,11 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Dashboard Removed per user request */}
+                <QuickStart />
+
+                <div className="space-y-6">
+                    <StudentDashboard progress={displayProgress!} />
+                </div>
             </div>
         </div>
     );

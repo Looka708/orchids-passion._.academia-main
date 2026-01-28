@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { MiniProfile } from "@/components/profile/MiniProfile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +23,14 @@ interface LeaderboardProps {
 }
 
 export default function Leaderboard({ entries, currentUserId }: LeaderboardProps) {
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+    const [miniProfileOpen, setMiniProfileOpen] = useState(false);
+
+    const handleUserClick = (userId: string) => {
+        setSelectedUserId(userId);
+        setMiniProfileOpen(true);
+    };
+
     const getRankIcon = (rank: number) => {
         switch (rank) {
             case 1:
@@ -59,10 +69,11 @@ export default function Leaderboard({ entries, currentUserId }: LeaderboardProps
                         return (
                             <div
                                 key={entry.userId}
+                                onClick={() => handleUserClick(entry.userId)}
                                 className={`
-                  flex items-center gap-4 p-3 rounded-lg border
+                  flex items-center gap-4 p-3 rounded-lg border cursor-pointer
                   ${isCurrentUser ? 'bg-primary/5 border-primary' : 'bg-background'}
-                  transition-all hover:shadow-md
+                  transition-all hover:shadow-md hover:border-primary/50
                 `}
                             >
                                 {/* Rank */}
@@ -81,12 +92,9 @@ export default function Leaderboard({ entries, currentUserId }: LeaderboardProps
                                 {/* User Info */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <Link
-                                            href={`/profile/${encodeURIComponent(entry.userId)}`}
-                                            className="font-semibold truncate hover:text-primary hover:underline transition-colors cursor-pointer"
-                                        >
+                                        <span className="font-semibold truncate hover:text-primary transition-colors">
                                             {entry.userName}
-                                        </Link>
+                                        </span>
                                         {isCurrentUser && (
                                             <span className="ml-2 text-xs text-primary">(You)</span>
                                         )}
@@ -117,6 +125,12 @@ export default function Leaderboard({ entries, currentUserId }: LeaderboardProps
                     )}
                 </div>
             </CardContent>
+
+            <MiniProfile
+                userId={selectedUserId}
+                open={miniProfileOpen}
+                onOpenChange={setMiniProfileOpen}
+            />
         </Card>
     );
 }

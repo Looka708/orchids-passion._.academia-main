@@ -84,7 +84,7 @@ export function EquipSelector({ user, badges, userLevel, onUpdate }: EquipSelect
                                         <div className="relative">
                                             <Avatar className={cn("h-16 w-16 transition-all", item.preview)}>
                                                 <AvatarImage src={user.photoURL} />
-                                                <AvatarFallback>{user.name?.charAt(0) || 'S'}</AvatarFallback>
+                                                <AvatarFallback>{(user.name || user.email || "S").charAt(0).toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                             {isDisabled && (
                                                 <div className="absolute inset-0 flex items-center justify-center bg-background/60 rounded-full">
