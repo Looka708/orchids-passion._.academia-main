@@ -1,0 +1,23 @@
+id,name,description,preview,type,rarity,requiredLevel,ownerOnly
+none,None,No frame,border-transparent,frame,common,0,false
+bronze,Bronze Scholar,For dedicated beginners,ring-4 ring-[#CD7F32] shadow-[0_0_10px_rgba(205,127,50,0.5)],frame,common,5,false
+silver,Silver Sage,A mark of steady progress,ring-4 ring-[#C0C0C0] shadow-[0_0_10px_rgba(192,192,192,0.5)],frame,rare,10,false
+gold,Golden Elite,Excellence in every lesson,ring-4 ring-[#FFD700] shadow-[0_0_15px_rgba(255,215,0,0.6)],frame,rare,15,false
+nature,Nature Whisperer,One with the roots of knowledge,ring-4 ring-green-600 border-2 border-emerald-400 shadow-[0_0_15px_rgba(34,197,94,0.6)],frame,rare,12,false
+fire,Burning Passion,An unquenchable thirst for learning,ring-4 ring-orange-600 border-2 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.8)] animate-pulse,frame,epic,18,false
+ice,Crystal Clear,Cool intellect and sharp focus,ring-4 ring-cyan-400 border-2 border-white shadow-[0_0_20px_rgba(165,243,252,0.8)],frame,epic,22,false
+matrix,Digital Construct,Seeing the code behind the world,ring-4 ring-green-500 border-dashed border-2 border-black shadow-[0_0_15px_rgba(0,255,0,0.6)] font-mono,frame,legendary,30,false
+rainbow,Prismatic Scholar,Mastery of all spectrums,ring-4 ring-transparent bg-gradient-to-r from-red-500 via-green-500 to-blue-500 p-[2px] animate-spin-slow,frame,legendary,35,false
+diamond,Diamond Master,Refined knowledge and skill,ring-4 ring-[#B9F2FF] shadow-[0_0_20px_rgba(185,242,255,0.7)] animate-pulse,frame,epic,20,false
+neon,Cyber Prodigy,The future of learning,ring-4 ring-[#00F3FF] shadow-[0_0_20px_rgba(0,243,255,0.8)] border-2 border-white,frame,epic,25,false
+owner,Founders Halo,The ultimate mark of authority,ring-4 ring-primary shadow-[0_0_25px_rgba(var(--primary),0.8)] border-2 border-yellow-400 animate-bounce-slow,frame,legendary,0,true
+default,Academic Clean,Classic professional look,bg-card border-border,theme,common,0,false
+midnight,Midnight Study,Focus in the dark of night,bg-[#0F172A] border-[#1E293B] text-slate-100,theme,rare,8,false
+sunset,Sunset Glow,Warm colors for evening review,bg-gradient-to-br from-orange-500/10 to-pink-500/10 border-orange-200/50,theme,rare,12,false
+ocean,Ocean Depths,Calm and deep learning,bg-gradient-to-br from-blue-600/10 to-cyan-500/10 border-blue-200/50,theme,epic,18,false
+emerald,Emerald Forest,Growth and prosperity,bg-gradient-to-br from-emerald-600/10 to-teal-500/10 border-emerald-200/50,theme,epic,22,false
+galaxy,Nebula Dreams,Study among the stars,bg-[#0f0c29] bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] text-white border-purple-500/30,theme,legendary,30,false
+cyberpunk,Neon City,High tech, high knowledge,bg-black border-2 border-neon-pink shadow-[0_0_10px_#ff00ff] text-neon-green,theme,epic,28,false
+blossom,Cherry Blossom,Peaceful spring study,bg-gradient-to-r from-pink-100 to-white border-pink-200 text-pink-900,theme,rare,14,false
+vintage,Old Library,Timeless wisdom,bg-[#fdfbf7] border-[#e2d9cd] text-[#5c4b37],theme,common,5,false
+owner_theme,Royal Archive,Exclusive to the institution founders,bg-gradient-to-br from-yellow-500/20 via-primary/10 to-yellow-500/20 border-yellow-400/50,theme,legendary,0,true

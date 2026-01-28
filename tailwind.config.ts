@@ -1,5 +1,5 @@
 
-import type {Config} from 'tailwindcss';
+import type { Config } from 'tailwindcss';
 
 const config = {
   darkMode: ['class'],
@@ -99,6 +99,8 @@ const config = {
         "orbit-slow": "orbit 20s linear infinite",
         "orbit-medium": "orbit 15s linear infinite reverse",
         "orbit-fast": "orbit 10s linear infinite",
+        "bounce-slow": "bounce 3s infinite",
+        "spin-slow": "spin 3s linear infinite",
       },
     },
   },

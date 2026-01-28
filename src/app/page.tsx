@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 import {
   Accordion,
   AccordionContent,
@@ -11,7 +10,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import CosmeticAvatar from "@/components/cosmetic/CosmeticAvatar";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -129,235 +127,141 @@ export default function Home() {
     .slice(0, 10);
 
   return (
-    <div className="bg-home-gradient min-h-screen">
+    <div className="bg-home-gradient">
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-        className="relative w-full overflow-hidden pt-24 pb-20 md:pt-32 md:pb-32"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative w-full overflow-hidden py-20 md:py-32"
       >
-        <div className="absolute inset-0 z-0 opacity-40">
+        <div className="absolute inset-0 z-0">
           <motion.div
             animate={{
-              translateY: [0, -20, 0],
-              opacity: [0.3, 0.6, 0.3]
+              scale: [1, 1.1, 1],
+              opacity: [0.3, 0.5, 0.3]
             }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -left-20 top-1/4 h-[500px] w-[500px] rounded-full bg-primary/20 blur-[120px]"
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -left-20 top-1/4 h-64 w-64 rounded-full bg-primary/10 blur-3xl"
           ></motion.div>
           <motion.div
             animate={{
-              translateY: [0, 20, 0],
-              opacity: [0.3, 0.5, 0.3]
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0.4, 0.3]
             }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute -right-20 top-1/2 h-[450px] w-[450px] rounded-full bg-primary/15 blur-[100px]"
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute -right-20 top-1/2 h-64 w-64 rounded-full bg-primary/10 blur-3xl"
           ></motion.div>
         </div>
 
-        <div className="container relative z-20 mx-auto px-4 md:px-6">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="max-w-2xl space-y-8"
-            >
-              <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary backdrop-blur-sm">
-                <span className="mr-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white uppercase">New</span>
-                Next-Gen Online Learning Platform
-              </div>
-              <h1 className="text-5xl font-extrabold tracking-tight text-foreground sm:text-6xl lg:text-8xl leading-[1.1]">
-                Master Your <br />
-                <span className="text-gradient">Future</span> with <br />
-                Passion
-              </h1>
-              <p className="text-lg text-muted-foreground md:text-xl/relaxed max-w-[550px]">
-                Empowering students with expert tutoring for Grades 6-12 and specialized entry test prep for elite military careers.
-              </p>
-              <div className="flex flex-col gap-4 sm:flex-row pt-4">
-                <Button asChild size="lg" className="h-14 px-10 text-lg font-semibold button-glow rounded-2xl">
-                  <Link href="/signup">
-                    Enroll Now <ChevronRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="lg" className="h-14 px-10 text-lg font-semibold rounded-2xl backdrop-blur-sm border-primary/20 hover:bg-primary/5 transition-colors">
-                  <Link href="#courses">
-                    Explore Programs
-                  </Link>
-                </Button>
-              </div>
+        <div className="container relative z-20 grid items-center gap-12 px-4 md:grid-cols-2 md:px-6">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="space-y-6"
+          >
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-7xl">
+              Up Your <span className="text-primary relative inline-block">
+                Skills
+                <motion.svg
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 1, delay: 1 }}
+                  viewBox="0 0 100 20"
+                  className="absolute -bottom-2 left-0 w-full h-3 text-primary/30"
+                >
+                  <path d="M0 10 Q 50 20 100 10" fill="transparent" stroke="currentColor" strokeWidth="4" />
+                </motion.svg>
+              </span> <br />
+              To Advance Your <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Career Path</span>
+            </h1>
+            <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed">
+              Expert tutoring for Grades 6-12 and specialized preparation for AFNS, PAF, MCJ & MCM entrance exams. The latest online learning system and material that help your knowledge growing.
+            </p>
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <Button asChild size="lg" className="h-12 px-8 text-base transition-all hover:shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:scale-105">
+                <Link href="/contact">
+                  Get Started Today <ChevronRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </motion.div>
 
-              <div className="flex items-center gap-6 pt-8 border-t border-primary/10">
-                <div className="flex -space-x-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <Avatar key={i} className="h-10 w-10 border-2 border-background ring-2 ring-primary/10">
-                      <AvatarImage src={`https://api.dicebear.com/9.x/avataaars/svg?seed=user${i}&backgroundColor=transparent`} />
-                      <AvatarFallback>U</AvatarFallback>
-                    </Avatar>
-                  ))}
-                </div>
-                <div>
-                  <p className="text-sm font-bold">Join 5,000+ students</p>
-                  <div className="flex items-center">
-                    {[1, 2, 3, 4, 5].map(i => <Star key={i} className="h-3 w-3 fill-yellow-500 text-yellow-500" />)}
-                    <span className="ml-2 text-xs text-muted-foreground">(4.9/5 overall rating)</span>
-                  </div>
-                </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="relative flex h-full min-h-[400px] w-full items-center justify-center"
+          >
+            <div className="absolute inset-0 m-auto h-[380px] w-[380px] rounded-full bg-primary/20 blur-3xl opacity-50"></div>
+            <div className="relative z-10 rounded-2xl bg-background/50 p-4 shadow-2xl ring-1 ring-border backdrop-blur-md">
+              <Image src="/Main.png" alt="Instructor" width={400} height={500} className="rounded-xl object-cover" priority />
+            </div>
+
+            {/* Stats Cards with Float Animation */}
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -bottom-4 left-0 z-20 flex items-center gap-3 rounded-xl border bg-background/90 p-4 shadow-xl backdrop-blur-md"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-xl font-bold">5K+</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Online Courses</p>
               </div>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.2 }}
-              className="relative hidden lg:block"
+              animate={{ y: [0, 10, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -top-8 right-0 z-20 flex items-center gap-3 rounded-xl border bg-background/90 p-4 shadow-xl backdrop-blur-md"
             >
-              <div className="relative z-10 overflow-hidden rounded-[2.5rem] border-8 border-white/10 shadow-2xl backdrop-blur-sm">
-                <Image
-                  src="/Main.png"
-                  alt="Elite Learning"
-                  width={600}
-                  height={750}
-                  className="rounded-[1.5rem] object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <PlayCircle className="h-6 w-6 text-primary" />
               </div>
-
-              {/* Floating Dashboard Elements */}
-              <motion.div
-                animate={{ y: [0, -15, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="glass-card absolute -bottom-8 -left-12 z-20 flex items-center gap-4 rounded-3xl p-6"
-              >
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/20">
-                  <Users2 className="h-7 w-7 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-black">98%</p>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Success Rate</p>
-                </div>
-              </motion.div>
-
-              <motion.div
-                animate={{ y: [0, 15, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                className="glass-card absolute -right-8 top-12 z-20 flex items-center gap-4 rounded-3xl p-6"
-              >
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/20">
-                  <PlayCircle className="h-7 w-7 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-black">24/7</p>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Support Access</p>
-                </div>
-              </motion.div>
-
-              <div className="absolute -z-10 h-[100%] w-[100%] rounded-full bg-primary/10 blur-[100px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+              <div>
+                <p className="text-xl font-bold">2K+</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Video Lessons</p>
+              </div>
             </motion.div>
-          </div>
+          </motion.div>
         </div>
       </motion.section>
 
-      {/* Trust Quote Section */}
-      <section className="py-10 border-y border-primary/5 bg-primary/[0.02]">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">Trusted by leading educational institutions</p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-            {/* Replace with actual partner logos or icons if available */}
-            <div className="flex items-center gap-2 font-bold text-xl"><BookOpen className="h-6 w-6" /> EDUCORE</div>
-            <div className="flex items-center gap-2 font-bold text-xl"><Plane className="h-6 w-6" /> PAF PREP</div>
-            <div className="flex items-center gap-2 font-bold text-xl"><Users2 className="h-6 w-6" /> MCM-CADETS</div>
-            <div className="flex items-center gap-2 font-bold text-xl"><Star className="h-6 w-6" /> ACADEMIX</div>
-          </div>
-        </div>
-      </section>
-
-      <section id="courses" className="w-full py-24 md:py-32">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center mb-16">
-            <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-              Our <span className="text-gradient">Premium</span> Programs
+      <section id="courses" className="w-full py-16 md:py-24">
+        <div className="container px-4 md:px-6">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
+              Our Programs
             </h2>
-            <p className="mx-auto max-w-[800px] text-lg text-muted-foreground md:text-xl">
-              Meticulously crafted courses designed by industry experts to ensure your success in academic and competitive examinations.
+            <p className="mx-auto mt-4 max-w-[700px] text-muted-foreground md:text-xl">
+              Find the perfect program to achieve your academic and career goals.
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {courses.map((course, idx) => (
-              <motion.div
-                key={course.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className="group h-full"
-              >
-                <CourseCard course={course} />
-              </motion.div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {courses.map((course) => (
+              <CourseCard key={course.title} course={course} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="w-full py-24 bg-muted/50 relative overflow-hidden">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8">
-              <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl leading-tight">
-                Empowering Your Educational <span className="text-gradient">Journey</span>
-              </h2>
-              <div className="grid gap-6">
-                {[
-                  { title: "Expert Instruction", desc: "Learn from top-tier educators with years of specialized experience.", icon: Users2, color: "bg-blue-500" },
-                  { title: "Smart Progress Tracking", desc: "Advanced analytics to monitor your growth and focus on key areas.", icon: Star, color: "bg-amber-500" },
-                  { title: "Quality Study Materials", desc: "Comprehensive notes, interactive mock tests, and curated video lessons.", icon: BookOpen, color: "bg-primary" },
-                ].map((feature, i) => (
-                  <motion.div
-                    key={i}
-                    whileHover={{ x: 10 }}
-                    className="flex gap-4 p-4 rounded-2xl border border-transparent hover:border-primary/10 hover:bg-background/80 transition-all"
-                  >
-                    <div className={cn("flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white", feature.color)}>
-                      <feature.icon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-bold">{feature.title}</h4>
-                      <p className="text-muted-foreground">{feature.desc}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-            <div className="relative">
-              <div className="aspect-square rounded-full bg-primary/20 absolute -z-10 blur-[100px] scale-150 animate-pulse"></div>
-              <div className="glass-card rounded-[3rem] p-4 p-2 shadow-2xl">
-                <div className="rounded-[2.5rem] overflow-hidden">
-                  {/* In a real app, use a dynamic UI preview or another quality image */}
-                  <Image src="/program-academics.png" alt="Feature preview" width={600} height={600} className="object-cover" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="pricing" className="w-full py-24 md:py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-black/[0.02] dark:bg-grid-white/[0.02] bg-[size:60px_60px]"></div>
-        <div className="container relative z-10 mx-auto px-4 md:px-6">
+      <section id="pricing" className="w-full py-16 md:py-32 relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:40px_40px]"></div>
+        <div className="container relative z-10 px-4 md:px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-20 text-center"
+            className="mb-16 text-center"
           >
-            <h2 className="text-4xl font-bold tracking-tighter sm:text-6xl mb-6">
-              Simple, <span className="text-gradient">Transparent</span> Pricing
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl lg:text-6xl mb-4">
+              Simple, <span className="text-primary">Transparent</span> Pricing
             </h2>
-            <p className="mx-auto max-w-[700px] text-lg text-muted-foreground md:text-xl">
-              Investment in your choice of excellence. Choose the plan that fits your ambition.
+            <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
+              Everything you need to excel in your academics and career tests. No hidden fees.
             </p>
           </motion.div>
 
@@ -368,7 +272,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               whileHover={{ y: -10 }}
-              className="relative flex flex-col rounded-[2.5rem] border bg-background/50 p-10 shadow-xl backdrop-blur-md transition-all border-primary/10"
+              className="relative flex flex-col rounded-3xl border bg-card/50 p-8 shadow-2xl backdrop-blur-sm transition-all border-primary/10"
             >
               <div className="mb-8">
                 <div className="inline-flex items-center justify-center rounded-2xl bg-blue-500/10 p-4 mb-6">
@@ -397,7 +301,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <Button className="w-full h-14 text-lg font-bold rounded-2xl button-glow" asChild>
+              <Button className="w-full h-12 text-base font-bold shadow-lg shadow-primary/20" asChild>
                 <Link href="/checkout?plan=student">Get Started</Link>
               </Button>
             </motion.div>
@@ -409,14 +313,14 @@ export default function Home() {
               viewport={{ once: true }}
               whileHover={{ y: -10 }}
               transition={{ delay: 0.1 }}
-              className="relative flex flex-col rounded-[2.5rem] border-2 border-primary bg-primary/[0.03] p-10 shadow-2xl backdrop-blur-xl transition-all scale-105 z-10"
+              className="relative flex flex-col rounded-3xl border-2 border-primary bg-primary/[0.02] p-8 shadow-2xl backdrop-blur-md transition-all ring-4 ring-primary/5"
             >
-              <div className="absolute -top-5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-8 py-2 text-sm font-bold text-white shadow-xl shadow-primary/25">
+              <div className="absolute -top-5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-6 py-2 text-sm font-bold text-primary-foreground shadow-xl">
                 MOST POPULAR
               </div>
               <div className="mb-8">
-                <div className="inline-flex items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/20 p-4 mb-6 text-white">
-                  <Users2 className="h-8 w-8" />
+                <div className="inline-flex items-center justify-center rounded-2xl bg-primary/20 p-4 mb-6">
+                  <Users2 className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-3xl font-bold">Teacher</h3>
                 <p className="text-muted-foreground mt-2">Empower your entire classroom</p>
@@ -438,11 +342,11 @@ export default function Home() {
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                    <span className="text-sm font-medium font-semibold">{feature}</span>
+                    <span className="text-sm font-medium">{feature}</span>
                   </div>
                 ))}
               </div>
-              <Button className="w-full h-14 text-lg font-bold rounded-2xl shadow-xl shadow-primary/30 button-glow" asChild>
+              <Button className="w-full h-12 text-base font-bold shadow-xl shadow-primary/30" asChild>
                 <Link href="/checkout?plan=teacher">Start Teaching</Link>
               </Button>
             </motion.div>
@@ -454,7 +358,7 @@ export default function Home() {
               viewport={{ once: true }}
               whileHover={{ y: -10 }}
               transition={{ delay: 0.2 }}
-              className="relative flex flex-col rounded-[2.5rem] border bg-background/50 p-10 shadow-xl backdrop-blur-md transition-all border-primary/10"
+              className="relative flex flex-col rounded-3xl border bg-card/50 p-8 shadow-2xl backdrop-blur-sm transition-all border-primary/10"
             >
               <div className="mb-8">
                 <div className="inline-flex items-center justify-center rounded-2xl bg-purple-500/10 p-4 mb-6">
@@ -484,7 +388,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <Button variant="outline" className="w-full h-14 text-lg font-bold border-2 rounded-2xl" asChild>
+              <Button variant="outline" className="w-full h-12 text-base font-bold border-2" asChild>
                 <Link href="/contact">Contact Institution</Link>
               </Button>
             </motion.div>
@@ -575,15 +479,14 @@ export default function Home() {
                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center font-bold text-white shadow-md">
                         {index + 1}
                       </div>
-                      <CosmeticAvatar
-                        src={entry.photoURL || `https://api.dicebear.com/9.x/avataaars/svg?seed=${entry.userName || entry.userId}`}
-                        fallback={entry.userName || 'Student'}
-                        effectId={entry.activeAvatarEffect || 'none'}
-                        size="md"
-                        className="bg-white border-white shadow-md rounded-full overflow-hidden"
-                      />
+                      <Avatar className="w-12 h-12 border-2 border-white shadow-md">
+                        <AvatarImage src={entry.photoURL || `https://api.dicebear.com/9.x/avataaars/svg?seed=${entry.name || entry.userId}`} alt={entry.name} />
+                        <AvatarFallback className="bg-gradient-to-br from-orange-400 to-red-500 text-white font-bold text-lg">
+                          {entry.name?.charAt(0).toUpperCase() || 'S'}
+                        </AvatarFallback>
+                      </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm truncate text-foreground">{entry.userName || 'Student'}</p>
+                        <p className="font-bold text-sm truncate text-foreground">{entry.name || 'Student'}</p>
                         <p className="text-xs font-semibold text-orange-600 dark:text-orange-400 flex items-center gap-1">
                           <span className="text-base">🔥</span>
                           {entry.streak || 0} day streak
@@ -617,19 +520,19 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="testimonials" className="w-full py-24 md:py-32 relative overflow-hidden bg-primary/5">
-        <div className="container relative z-10 mx-auto px-4 md:px-6">
+      <section id="testimonials" className="w-full py-20 md:py-32 relative overflow-hidden">
+        <div className="container relative z-10 px-4 md:px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-20 text-center"
+            className="mb-16 text-center"
           >
-            <h2 className="text-4xl font-bold tracking-tighter sm:text-6xl mb-6">
-              Hear from our <span className="text-gradient">Community</span>
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl lg:text-6xl mb-4">
+              Loved by <span className="text-primary">Thousands</span> of Students
             </h2>
-            <p className="mx-auto max-w-[700px] text-lg text-muted-foreground md:text-xl">
-              Join thousands of successful students who have transformed their academic journey with our platform.
+            <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
+              Real stories from real students who transformed their careers with Passion Academia.
             </p>
           </motion.div>
 
@@ -641,32 +544,32 @@ export default function Home() {
               {testimonials.map((testimonial, index) => (
                 <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3 p-4">
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
+                    initial={{ opacity: 0, scale: 0.9 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ delay: index * 0.1 }}
-                    className="flex h-full flex-col justify-between rounded-[2rem] border bg-background p-10 shadow-xl border-primary/5 hover:border-primary/20 transition-all group scale-[0.98] hover:scale-100"
+                    className="flex h-full flex-col justify-between rounded-3xl border bg-card/50 p-8 shadow-xl backdrop-blur-sm border-primary/5 hover:border-primary/20 transition-colors"
                   >
                     <div>
-                      <div className="flex gap-1 mb-8 text-yellow-500">
+                      <div className="flex gap-1 mb-6 text-yellow-500">
                         {[...Array(5)].map((_, i) => (
                           <Star key={i} className="h-5 w-5 fill-current" />
                         ))}
                       </div>
-                      <p className="mb-10 text-xl leading-relaxed text-muted-foreground/90 italic font-medium">
+                      <p className="mb-8 text-lg leading-relaxed text-muted-foreground italic">
                         &ldquo;{testimonial.quote}&rdquo;
                       </p>
                     </div>
-                    <div className="flex items-center gap-5 pt-8 border-t border-primary/10">
-                      <Avatar className="h-16 w-16 border-2 border-primary/20 shadow-lg">
+                    <div className="flex items-center gap-4 border-t pt-6 border-primary/5">
+                      <Avatar className="h-14 w-14 border-2 border-primary/10">
                         <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
-                        <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
+                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
                           {testimonial.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-bold text-xl tracking-tight">{testimonial.name}</p>
-                        <p className="text-sm font-bold text-primary/80 uppercase tracking-widest">
+                        <p className="font-bold text-lg">{testimonial.name}</p>
+                        <p className="text-sm font-medium text-primary">
                           {testimonial.role}
                         </p>
                       </div>
@@ -675,9 +578,9 @@ export default function Home() {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <div className="flex justify-center gap-6 mt-16">
-              <CarouselPrevious className="static translate-y-0 h-14 w-14 rounded-2xl border-2 hover:bg-primary hover:text-white transition-all" />
-              <CarouselNext className="static translate-y-0 h-14 w-14 rounded-2xl border-2 hover:bg-primary hover:text-white transition-all" />
+            <div className="flex justify-center gap-4 mt-12">
+              <CarouselPrevious className="static translate-y-0" />
+              <CarouselNext className="static translate-y-0" />
             </div>
           </Carousel>
         </div>

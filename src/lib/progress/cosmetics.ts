@@ -47,6 +47,51 @@ export const AVATAR_FRAMES: CosmeticItem[] = [
         requiredLevel: 15
     },
     {
+        id: 'nature',
+        name: 'Nature Whisperer',
+        description: 'One with the roots of knowledge',
+        preview: 'ring-4 ring-green-600 border-2 border-emerald-400 shadow-[0_0_15px_rgba(34,197,94,0.6)]',
+        type: 'frame',
+        rarity: 'rare',
+        requiredLevel: 12
+    },
+    {
+        id: 'fire',
+        name: 'Burning Passion',
+        description: 'An unquenchable thirst for learning',
+        preview: 'ring-4 ring-orange-600 border-2 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.8)] animate-pulse',
+        type: 'frame',
+        rarity: 'epic',
+        requiredLevel: 18
+    },
+    {
+        id: 'ice',
+        name: 'Crystal Clear',
+        description: 'Cool intellect and sharp focus',
+        preview: 'ring-4 ring-cyan-400 border-2 border-white shadow-[0_0_20px_rgba(165,243,252,0.8)]',
+        type: 'frame',
+        rarity: 'epic',
+        requiredLevel: 22
+    },
+    {
+        id: 'matrix',
+        name: 'Digital Construct',
+        description: 'Seeing the code behind the world',
+        preview: 'ring-4 ring-green-500 border-dashed border-2 border-black shadow-[0_0_15px_rgba(0,255,0,0.6)] font-mono',
+        type: 'frame',
+        rarity: 'legendary',
+        requiredLevel: 30
+    },
+    {
+        id: 'rainbow',
+        name: 'Prismatic Scholar',
+        description: 'Mastery of all spectrums',
+        preview: 'ring-4 ring-transparent bg-gradient-to-r from-red-500 via-green-500 to-blue-500 p-[2px] animate-spin-slow',
+        type: 'frame',
+        rarity: 'legendary',
+        requiredLevel: 35
+    },
+    {
         id: 'diamond',
         name: 'Diamond Master',
         description: 'Refined knowledge and skill',
@@ -121,6 +166,42 @@ export const PROFILE_THEMES: CosmeticItem[] = [
         type: 'theme',
         rarity: 'epic',
         requiredLevel: 22
+    },
+    {
+        id: 'galaxy',
+        name: 'Nebula Dreams',
+        description: 'Study among the stars',
+        preview: 'bg-[#0f0c29] bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] text-white border-purple-500/30',
+        type: 'theme',
+        rarity: 'legendary',
+        requiredLevel: 30
+    },
+    {
+        id: 'cyberpunk',
+        name: 'Neon City',
+        description: 'High tech, high knowledge',
+        preview: 'bg-black border-2 border-neon-pink shadow-[0_0_10px_#ff00ff] text-neon-green',
+        type: 'theme',
+        rarity: 'epic',
+        requiredLevel: 28
+    },
+    {
+        id: 'blossom',
+        name: 'Cherry Blossom',
+        description: 'Peaceful spring study',
+        preview: 'bg-gradient-to-r from-pink-100 to-white border-pink-200 text-pink-900',
+        type: 'theme',
+        rarity: 'rare',
+        requiredLevel: 14
+    },
+    {
+        id: 'vintage',
+        name: 'Old Library',
+        description: 'Timeless wisdom',
+        preview: 'bg-[#fdfbf7] border-[#e2d9cd] text-[#5c4b37]',
+        type: 'theme',
+        rarity: 'common',
+        requiredLevel: 5
     },
     {
         id: 'owner',

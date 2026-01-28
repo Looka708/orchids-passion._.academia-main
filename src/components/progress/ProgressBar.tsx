@@ -44,14 +44,7 @@ export default function ProgressBar({
                 )}
             </div>
 
-            <div className="relative h-4 w-full bg-muted rounded-full overflow-hidden shadow-inner">
-                <div
-                    className={`absolute top-0 left-0 h-full bg-gradient-to-r ${levelColor.replace('text-', 'from-')} to-primary transition-all duration-1000 ease-out`}
-                    style={{ width: `${progress}%` }}
-                >
-                    <div className="absolute inset-0 bg-white/20 animate-pulse" />
-                </div>
-            </div>
+            <Progress value={progress} className="h-3" />
 
             {showDetails && (
                 <div className="flex justify-between text-xs text-muted-foreground">
