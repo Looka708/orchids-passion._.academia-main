@@ -3,7 +3,7 @@ import { getLeaderboard } from '@/lib/progress/progressService';
 
 export function useLeaderboard(limitCount: number = 10) {
     const { data, error, isLoading, mutate } = useSWR(
-        `leaderboard-v2-${limitCount}`, // v2 to bust cache after filtering changes
+        `leaderboard-v3-${limitCount}`, // v3 to bust cache after adding photoURL
         () => getLeaderboard(limitCount),
         {
             revalidateOnFocus: false,

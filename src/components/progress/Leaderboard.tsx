@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { MiniProfile } from "@/components/profile/MiniProfile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Medal, Award } from "lucide-react";
 import { getLevelColor } from "@/lib/progress/levelSystem";
@@ -12,6 +12,7 @@ import { getLevelColor } from "@/lib/progress/levelSystem";
 interface LeaderboardEntry {
     userId: string;
     userName: string;
+    photoURL?: string;
     totalXP: number;
     level: number;
     rank: number;
@@ -83,6 +84,7 @@ export default function Leaderboard({ entries, currentUserId }: LeaderboardProps
 
                                 {/* Avatar */}
                                 <Avatar className="h-10 w-10">
+                                    <AvatarImage src={entry.photoURL} alt={entry.userName} />
                                     <AvatarFallback className={getRankBadge(entry.rank)}>
                                         {entry.userName.charAt(0).toUpperCase()}
                                     </AvatarFallback>

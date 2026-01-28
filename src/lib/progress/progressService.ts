@@ -194,35 +194,46 @@ export async function updateStreak(userId: string): Promise<number> {
     if (!progress) return 0;
 
     const now = new Date();
-    const lastActive = progress.lastActive;
+    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
 
-    // Normalize dates to compare just the date part (ignore time)
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const lastActiveDate = new Date(lastActive.getFullYear(), lastActive.getMonth(), lastActive.getDate());
-
-    const daysDiff = Math.floor((today.getTime() - lastActiveDate.getTime()) / (1000 * 60 * 60 * 24));
-
-    let newStreak = progress.streak;
-
-    if (daysDiff === 0) {
-        // Same day - already counted, just update lastActive
+    // Check if streak was already updated today
+    if (progress.lastStreakDate === today) {
+        // Already counted streak for today, just update lastActive
         const progressRef = doc(db, 'users', userId, 'progress', 'current');
         await updateDoc(progressRef, {
             lastActive: serverTimestamp()
         });
-        return newStreak;
-    } else if (daysDiff === 1) {
-        // Next day (yesterday was last active) - increment streak
-        newStreak += 1;
-        await awardXP(userId, 5 + (newStreak >= 7 ? 10 : 0), 'streak', { streakDays: newStreak });
-    } else {
-        // Streak broken (more than 1 day gap) - reset to 1
+        return progress.streak;
+    }
+
+    let newStreak = progress.streak;
+
+    // If no previous streak date (first time), start streak at 1
+    if (!progress.lastStreakDate) {
         newStreak = 1;
+    } else {
+        // Calculate days since last streak update
+        const lastStreakDate = new Date(progress.lastStreakDate);
+        const todayDate = new Date(today);
+        const daysDiff = Math.floor((todayDate.getTime() - lastStreakDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (daysDiff === 1) {
+            // Consecutive day - increment streak
+            newStreak += 1;
+            // Bonus XP for streaks
+            const bonusXP = 5 + (newStreak >= 7 ? 10 : 0) + (newStreak >= 30 ? 25 : 0);
+            await awardXP(userId, bonusXP, 'streak', { streakDays: newStreak });
+        } else if (daysDiff > 1) {
+            // Streak broken - reset to 1
+            newStreak = 1;
+        }
+        // daysDiff === 0 shouldn't happen due to the check above, but just in case
     }
 
     const progressRef = doc(db, 'users', userId, 'progress', 'current');
     await updateDoc(progressRef, {
         streak: newStreak,
+        lastStreakDate: today,
         lastActive: serverTimestamp()
     });
 
@@ -256,6 +267,7 @@ export async function getUserActivities(userId: string, limitCount: number = 10)
 export async function getLeaderboard(limitCount: number = 10): Promise<Array<{
     userId: string;
     userName: string;
+    photoURL?: string;
     totalXP: number;
     level: number;
     rank: number;
@@ -298,11 +310,12 @@ export async function getLeaderboard(limitCount: number = 10): Promise<Array<{
             .map((progressDoc, index) => {
                 const progress = progressDoc.data() as { totalXP: number; level: number };
                 const userDoc = userDocs[index];
-                const userData = userDoc.exists() ? userDoc.data() as { name?: string; email?: string; role?: string } : {};
+                const userData = userDoc.exists() ? userDoc.data() as { name?: string; email?: string; role?: string; photoURL?: string } : {};
 
                 return {
                     userId: userIds[index],
                     userName: userData.name || userData.email || 'Anonymous',
+                    photoURL: userData.photoURL,
                     totalXP: progress.totalXP || 0,
                     level: progress.level || 1,
                     role: userData.role || 'user', // Default to 'user' if no role specified
@@ -320,6 +333,7 @@ export async function getLeaderboard(limitCount: number = 10): Promise<Array<{
             .map((entry, index) => ({
                 userId: entry.userId,
                 userName: entry.userName,
+                photoURL: entry.photoURL,
                 totalXP: entry.totalXP,
                 level: entry.level,
                 rank: index + 1

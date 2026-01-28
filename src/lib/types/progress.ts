@@ -8,6 +8,7 @@ export interface StudentProgress {
     streak: number;
     lastActive: Date;
     lastDailyQuizDate?: string; // YYYY-MM-DD format - tracks last daily quiz completion
+    lastStreakDate?: string; // YYYY-MM-DD format - prevents multiple streak updates per day
     achievements: string[];
     badges: Badge[];
     stats: StudentStats;
