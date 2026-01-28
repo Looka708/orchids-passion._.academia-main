@@ -30,6 +30,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { getUserProgress } from "@/lib/progress/progressService";
 import DailyQuizModal from "@/components/quiz/DailyQuizModal";
+import CosmeticAvatar from "@/components/cosmetic/CosmeticAvatar";
+import { StudentProgress } from "@/lib/types/progress";
 
 interface ClassLink {
   href: string;
@@ -48,6 +50,7 @@ const defaultNavLinks = [
 export default function Header() {
   const { isAuthenticated, logout, user, firebaseUser } = useAuth();
   const [streak, setStreak] = useState<number>(0);
+  const [userProgress, setUserProgress] = useState<StudentProgress | null>(null);
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [specialLinks, setSpecialLinks] = useState<ClassLink[]>([
     { href: "/afns", label: "AFNS", category: "special" },
@@ -114,6 +117,7 @@ export default function Header() {
           const progress = await getUserProgress(firebaseUser.uid);
           if (progress) {
             setStreak(progress.streak);
+            setUserProgress(progress);
           }
         } catch (error) {
           console.error('Error fetching streak:', error);
@@ -259,7 +263,7 @@ export default function Header() {
                 <div className="flex items-center gap-3 bg-muted/50 p-1.5 rounded-full pr-4">
                   <button
                     onClick={() => setQuizModalOpen(true)}
-                    className="flex h-8 w-8 items-center justify-center bg-background rounded-full shadow-sm hover:shadow-md transition-all"
+                    className="flex h-8 w-8 items-center justify-center bg-background rounded-full shadow-sm hover:shadow-md transition-all active:scale-90"
                   >
                     <span className="text-base">🔥</span>
                   </button>
@@ -269,6 +273,15 @@ export default function Header() {
                 <Button asChild variant="outline" className="rounded-xl border-primary/20 hover:bg-primary/5">
                   <Link href="/dashboard">Dashboard</Link>
                 </Button>
+
+                <div className="flex items-center gap-2 pr-2">
+                  <CosmeticAvatar
+                    src={firebaseUser?.photoURL || ''}
+                    fallback={user?.name || 'User'}
+                    effectId={userProgress?.activeAvatarEffect || 'none'}
+                    size="sm"
+                  />
+                </div>
 
                 {(user?.role === 'owner' || user?.role === 'admin') && (
                   <DropdownMenu>

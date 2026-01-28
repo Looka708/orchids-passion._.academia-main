@@ -12,6 +12,9 @@ export interface StudentProgress {
     badges: Badge[];
     stats: StudentStats;
     rewards: Reward[];
+    activeAvatarEffect?: string;
+    activeProfileEffect?: string;
+    unlockedEffects?: string[];
     name?: string; // Display name for leaderboard
     photoURL?: string; // Avatar URL for leaderboard
     role?: string; // User role for filtering (admin, teacher, owner, user)

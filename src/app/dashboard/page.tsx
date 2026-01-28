@@ -14,6 +14,10 @@ import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 import TourDriver from "@/components/onboarding/TourDriver";
 import QuickStart from "@/components/dashboard/QuickStart";
 import { useState } from "react";
+import { StudentProgress } from "@/lib/types/progress";
+import CosmeticAvatar from "@/components/cosmetic/CosmeticAvatar";
+import { ALL_EFFECTS } from "@/lib/progress/effects";
+import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
     const { isAuthenticated, user, firebaseUser, isLoading: authLoading, refreshUser, emailVerified } = useAuth();
@@ -106,7 +110,7 @@ export default function DashboardPage() {
     }
 
     // Default progress for custom users if not found (fallback)
-    const displayProgress = progress || (user ? {
+    const displayProgress: StudentProgress | null = progress || (user ? {
         userId: user.email || (user as any).uid || 'custom-user',
         totalXP: (user.role === 'owner' || user.role === 'admin') ? 150000 : 0,
         level: (user.role === 'owner' || user.role === 'admin') ? 25 : 1,
@@ -125,6 +129,9 @@ export default function DashboardPage() {
             quizzesCompleted: 0
         },
         rewards: [],
+        activeAvatarEffect: 'none',
+        activeProfileEffect: 'none',
+        unlockedEffects: ['none'],
         name: user.name || user.email || 'User',
         photoURL: user.photoURL || undefined
     } : null);
@@ -148,7 +155,7 @@ export default function DashboardPage() {
     }
 
 
-    const equippedBadge = displayProgress!.badges.find(b => b.id === user?.equippedBadge);
+    const equippedBadge = displayProgress!.badges.find((b: any) => b.id === user?.equippedBadge);
 
 
     return (
@@ -169,11 +176,16 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                <div className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-6 p-6 rounded-lg shadow-sm border bg-card">
-                    <Avatar className="h-24 w-24">
-                        <AvatarImage src={user?.photoURL} />
-                        <AvatarFallback className="text-2xl">{user?.name?.charAt(0).toUpperCase() || 'S'}</AvatarFallback>
-                    </Avatar>
+                <div className={cn(
+                    "mb-8 flex flex-col md:flex-row items-start md:items-center gap-6 p-10 rounded-[2.5rem] shadow-xl border bg-card/80 backdrop-blur-md relative overflow-hidden",
+                    displayProgress?.activeProfileEffect && ALL_EFFECTS.find(e => e.id === displayProgress.activeProfileEffect)?.className
+                )}>
+                    <CosmeticAvatar
+                        src={user?.photoURL}
+                        fallback={user?.name || 'S'}
+                        effectId={displayProgress?.activeAvatarEffect}
+                        size="xl"
+                    />
 
                     <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-3 flex-wrap">

@@ -41,7 +41,10 @@ export async function initializeUserProgress(userId: string): Promise<StudentPro
             perfectScores: 0,
             quizzesCompleted: 0
         },
-        rewards: []
+        rewards: [],
+        activeAvatarEffect: 'none',
+        activeProfileEffect: 'none',
+        unlockedEffects: ['none']
     };
 
     await setDoc(progressRef, {
@@ -107,11 +110,45 @@ export async function awardXP(
         details
     });
 
+    // Check for cosmetic unlocks
+    await checkCosmeticUnlocks(userId);
+
     return {
         newProgress: { ...currentProgress, ...updatedProgress } as StudentProgress,
         leveledUp,
         newLevel: leveledUp ? newLevel : undefined
     };
+}
+
+// Check and unlock cosmetic effects
+export async function checkCosmeticUnlocks(userId: string): Promise<string[]> {
+    const progress = await getUserProgress(userId);
+    if (!progress) return [];
+
+    const newUnlocks: string[] = [];
+    const currentUnlocks = progress.unlockedEffects || ['none'];
+
+    // Level based unlocks
+    if (progress.level >= 5 && !currentUnlocks.includes('glow_green')) newUnlocks.push('glow_green');
+    if (progress.level >= 10 && !currentUnlocks.includes('glass_frost')) newUnlocks.push('glass_frost');
+    if (progress.level >= 25 && !currentUnlocks.includes('legendary_aura')) newUnlocks.push('legendary_aura');
+
+    // Stat based unlocks
+    if (progress.stats.questionsAnswered >= 100 && !currentUnlocks.includes('neon_ring')) newUnlocks.push('neon_ring');
+    if (progress.stats.questionsAnswered >= 500 && !currentUnlocks.includes('cosmic_drift')) newUnlocks.push('cosmic_drift');
+    if (progress.stats.perfectScores >= 5 && !currentUnlocks.includes('sparkle_gold')) newUnlocks.push('sparkle_gold');
+
+    // Streak based unlocks
+    if (progress.streak >= 7 && !currentUnlocks.includes('animated_grid')) newUnlocks.push('animated_grid');
+
+    if (newUnlocks.length > 0) {
+        const progressRef = doc(db, 'users', userId, 'progress', 'current');
+        await updateDoc(progressRef, {
+            unlockedEffects: [...currentUnlocks, ...newUnlocks]
+        });
+    }
+
+    return newUnlocks;
 }
 
 // Update user stats
@@ -127,6 +164,9 @@ export async function updateUserStats(
     });
 
     await updateDoc(progressRef, updates);
+
+    // Check for cosmetic unlocks after stat update
+    await checkCosmeticUnlocks(userId);
 }
 
 // Check and unlock achievements
@@ -249,6 +289,9 @@ export async function getLeaderboard(limitCount: number = 10): Promise<Array<{
     userName: string;
     totalXP: number;
     level: number;
+    streak: number;
+    activeAvatarEffect: string;
+    photoURL: string;
     rank: number;
 }>> {
     try {
@@ -287,15 +330,18 @@ export async function getLeaderboard(limitCount: number = 10): Promise<Array<{
         // Build leaderboard data and filter out teachers/admins/owners
         const leaderboardData = progressSnapshot.docs
             .map((progressDoc, index) => {
-                const progress = progressDoc.data() as { totalXP: number; level: number };
+                const progress = progressDoc.data() as any;
                 const userDoc = userDocs[index];
-                const userData = userDoc.exists() ? userDoc.data() as { name?: string; email?: string; role?: string } : {};
+                const userData = userDoc.exists() ? userDoc.data() as any : {};
 
                 return {
                     userId: userIds[index],
                     userName: userData.name || userData.email || 'Anonymous',
                     totalXP: progress.totalXP || 0,
                     level: progress.level || 1,
+                    streak: progress.streak || 0,
+                    activeAvatarEffect: progress.activeAvatarEffect || 'none',
+                    photoURL: userData.photoURL || '',
                     role: userData.role || 'user', // Default to 'user' if no role specified
                     rank: 0 // Will be set after filtering
                 };
@@ -313,6 +359,9 @@ export async function getLeaderboard(limitCount: number = 10): Promise<Array<{
                 userName: entry.userName,
                 totalXP: entry.totalXP,
                 level: entry.level,
+                streak: entry.streak,
+                activeAvatarEffect: entry.activeAvatarEffect,
+                photoURL: entry.photoURL,
                 rank: index + 1
             }));
 

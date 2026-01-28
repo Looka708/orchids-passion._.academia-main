@@ -99,7 +99,10 @@
   }
 
   .glass-card {
-    @apply bg-background/60 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-[0_8px_32px_0_rgba(0, 0, 0, 0.08)];
+    background-color: hsla(var(--background), 0.6);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
   }
 
   .glass-header {
@@ -111,7 +114,148 @@
   }
 
   .button-glow {
-    @apply transition-all duration-300 hover:shadow-[0_0_20px_rgba(var(--primary), 0.35)] hover:scale-[1.02] active:scale-[0.98];
+    @apply transition-all duration-300;
+  }
+
+  .button-glow:hover {
+    box-shadow: 0 0 20px rgba(var(--primary), 0.35);
+    @apply scale-[1.02];
+  }
+
+  .button-glow:active {
+    @apply scale-[0.98];
+  }
+
+  /* AVATAR EFFECTS */
+  .effect-glow-green {
+    position: relative;
+  }
+
+  .effect-glow-green::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, hsla(142, 76%, 36%, 0.4) 0%, transparent 70%);
+    z-index: -1;
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .effect-neon-ring {
+    position: relative;
+    padding: 3px;
+    background: linear-gradient(var(--angle), #00ff88, #00bdff, #00ff88);
+    background-origin: border-box;
+    border-radius: 9999px;
+    animation: rotate-angle 3s linear infinite;
+  }
+
+  @property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  .effect-sparkle-gold {
+    position: relative;
+  }
+
+  .effect-sparkle-gold::before {
+    content: '✨';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 14px;
+    animation: float-sparkle 1.5s ease-in-out infinite;
+  }
+
+  .effect-legendary-aura {
+    position: relative;
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
+  }
+
+  .effect-legendary-aura::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 9999px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    animation: expand-aura 3s ease-out infinite;
+  }
+
+  /* PROFILE EFFECTS */
+  .effect-glass-frost {
+    backdrop-filter: blur(20px) saturate(180%);
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .effect-cyber-grid {
+    background-image: linear-gradient(rgba(0, 255, 136, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 136, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    animation: slide-grid 20s linear infinite;
+  }
+
+  /* KEYFRAMES */
+  @keyframes pulse-ring {
+
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.5;
+    }
+
+    50% {
+      transform: scale(1.1);
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes rotate-angle {
+    from {
+      --angle: 0deg;
+    }
+
+    to {
+      --angle: 360deg;
+    }
+  }
+
+  @keyframes float-sparkle {
+
+    0%,
+    100% {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    50% {
+      transform: translateY(-5px) scale(1.2);
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes expand-aura {
+    0% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+
+    100% {
+      transform: scale(1.4);
+      opacity: 0;
+    }
+  }
+
+  @keyframes slide-grid {
+    from {
+      background-position: 0 0;
+    }
+
+    to {
+      background-position: 30px 30px;
+    }
   }
 }
 

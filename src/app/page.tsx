@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import {
   Accordion,
   AccordionContent,
@@ -10,6 +11,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import CosmeticAvatar from "@/components/cosmetic/CosmeticAvatar";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -573,14 +575,15 @@ export default function Home() {
                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center font-bold text-white shadow-md">
                         {index + 1}
                       </div>
-                      <Avatar className="w-12 h-12 border-2 border-white shadow-md">
-                        <AvatarImage src={entry.photoURL || `https://api.dicebear.com/9.x/avataaars/svg?seed=${entry.name || entry.userId}`} alt={entry.name} />
-                        <AvatarFallback className="bg-gradient-to-br from-orange-400 to-red-500 text-white font-bold text-lg">
-                          {entry.name?.charAt(0).toUpperCase() || 'S'}
-                        </AvatarFallback>
-                      </Avatar>
+                      <CosmeticAvatar
+                        src={entry.photoURL || `https://api.dicebear.com/9.x/avataaars/svg?seed=${entry.userName || entry.userId}`}
+                        fallback={entry.userName || 'Student'}
+                        effectId={entry.activeAvatarEffect || 'none'}
+                        size="md"
+                        className="bg-white border-white shadow-md rounded-full overflow-hidden"
+                      />
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm truncate text-foreground">{entry.name || 'Student'}</p>
+                        <p className="font-bold text-sm truncate text-foreground">{entry.userName || 'Student'}</p>
                         <p className="text-xs font-semibold text-orange-600 dark:text-orange-400 flex items-center gap-1">
                           <span className="text-base">🔥</span>
                           {entry.streak || 0} day streak

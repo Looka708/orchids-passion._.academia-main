@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { EquipSelector } from "./EquipSelector";
 import { Badge } from "@/lib/types/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CosmeticSelection from "../cosmetic/CosmeticSelection";
 
 interface ProfileEditorProps {
     user: User;
@@ -88,7 +89,8 @@ export function ProfileEditor({ user, badges = [], userLevel = 1, onUpdate }: Pr
                 <Tabs defaultValue="info" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="info">Personal Info</TabsTrigger>
-                        <TabsTrigger value="customize">Customize</TabsTrigger>
+                        <TabsTrigger value="customize">Badges</TabsTrigger>
+                        <TabsTrigger value="cosmetics">Cosmetics</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="info">
@@ -156,6 +158,10 @@ export function ProfileEditor({ user, badges = [], userLevel = 1, onUpdate }: Pr
                             userLevel={userLevel}
                             onUpdate={onUpdate}
                         />
+                    </TabsContent>
+
+                    <TabsContent value="cosmetics" className="max-h-[400px] overflow-y-auto pr-2">
+                        {user.email && <CosmeticSelection userId={user.email} />}
                     </TabsContent>
                 </Tabs>
             </DialogContent>
