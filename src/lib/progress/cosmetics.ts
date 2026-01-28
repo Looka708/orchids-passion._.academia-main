@@ -53,7 +53,7 @@ export const AVATAR_FRAMES: CosmeticItem[] = [
         preview: 'ring-4 ring-green-600 border-2 border-emerald-400 shadow-[0_0_15px_rgba(34,197,94,0.6)]',
         type: 'frame',
         rarity: 'rare',
-        requiredLevel: 12
+        requiredLevel: 0
     },
     {
         id: 'fire',
@@ -62,7 +62,7 @@ export const AVATAR_FRAMES: CosmeticItem[] = [
         preview: 'ring-4 ring-orange-600 border-2 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.8)] animate-pulse',
         type: 'frame',
         rarity: 'epic',
-        requiredLevel: 18
+        requiredLevel: 0
     },
     {
         id: 'ice',
@@ -71,7 +71,7 @@ export const AVATAR_FRAMES: CosmeticItem[] = [
         preview: 'ring-4 ring-cyan-400 border-2 border-white shadow-[0_0_20px_rgba(165,243,252,0.8)]',
         type: 'frame',
         rarity: 'epic',
-        requiredLevel: 22
+        requiredLevel: 0
     },
     {
         id: 'matrix',
@@ -80,7 +80,7 @@ export const AVATAR_FRAMES: CosmeticItem[] = [
         preview: 'ring-4 ring-green-500 border-dashed border-2 border-black shadow-[0_0_15px_rgba(0,255,0,0.6)] font-mono',
         type: 'frame',
         rarity: 'legendary',
-        requiredLevel: 30
+        requiredLevel: 0
     },
     {
         id: 'rainbow',
@@ -89,7 +89,7 @@ export const AVATAR_FRAMES: CosmeticItem[] = [
         preview: 'ring-4 ring-transparent bg-gradient-to-r from-red-500 via-green-500 to-blue-500 p-[2px] animate-spin-slow',
         type: 'frame',
         rarity: 'legendary',
-        requiredLevel: 35
+        requiredLevel: 0
     },
     {
         id: 'diamond',
@@ -174,7 +174,7 @@ export const PROFILE_THEMES: CosmeticItem[] = [
         preview: 'bg-[#0f0c29] bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] text-white border-purple-500/30',
         type: 'theme',
         rarity: 'legendary',
-        requiredLevel: 30
+        requiredLevel: 0
     },
     {
         id: 'cyberpunk',
@@ -183,7 +183,7 @@ export const PROFILE_THEMES: CosmeticItem[] = [
         preview: 'bg-black border-2 border-neon-pink shadow-[0_0_10px_#ff00ff] text-neon-green',
         type: 'theme',
         rarity: 'epic',
-        requiredLevel: 28
+        requiredLevel: 0
     },
     {
         id: 'blossom',
@@ -192,7 +192,7 @@ export const PROFILE_THEMES: CosmeticItem[] = [
         preview: 'bg-gradient-to-r from-pink-100 to-white border-pink-200 text-pink-900',
         type: 'theme',
         rarity: 'rare',
-        requiredLevel: 14
+        requiredLevel: 0
     },
     {
         id: 'vintage',
@@ -201,7 +201,7 @@ export const PROFILE_THEMES: CosmeticItem[] = [
         preview: 'bg-[#fdfbf7] border-[#e2d9cd] text-[#5c4b37]',
         type: 'theme',
         rarity: 'common',
-        requiredLevel: 5
+        requiredLevel: 0
     },
     {
         id: 'owner',
