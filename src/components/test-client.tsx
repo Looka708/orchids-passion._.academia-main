@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, ArrowLeft, ArrowRight, AlertTriangle, Timer } from "lucide-react";
+import { CheckCircle, XCircle, ArrowLeft, ArrowRight, AlertTriangle, Timer, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
@@ -21,6 +21,8 @@ import { MCQ } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import Confetti from "./confetti";
 import VideoSuggestionWrapper from "./video/VideoSuggestionWrapper";
+import { useAuth } from "@/hooks/useAuth";
+import { awardXP, updateUserStats } from "@/lib/progress/progressService";
 
 const isUrdu = (text: string | null | undefined) => /[\u0600-\u06FF]/.test(text || "");
 
@@ -35,6 +37,7 @@ interface TestClientProps {
 
 
 export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, basePath, showVideoSuggestions = true }: TestClientProps) {
+  const { firebaseUser } = useAuth();
   const [testStarted, setTestStarted] = useState(false);
   const [numQuestions, setNumQuestions] = useState(0);
   const [mcqs, setMcqs] = useState<MCQ[]>([]);
@@ -51,13 +54,15 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
   const [score, setScore] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
   const [timeLeft, setTimeLeft] = useState(17);
+  const [xpAwarded, setXpAwarded] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
 
   // Define functions before useEffect
   const normalizeAnswer = (text: string | null | undefined) => {
     return text?.toString().trim().toLowerCase() || '';
   };
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     let correctAnswers = 0;
     mcqs.forEach((mcq, index) => {
       const selectedIdx = selectedAnswers[index];
@@ -68,13 +73,40 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
         }
       }
     });
-    const finalScore = (correctAnswers / mcqs.length) * 100;
+
+    const finalScore = mcqs.length > 0 ? (correctAnswers / mcqs.length) * 100 : 0;
     setScore(finalScore);
+    setCorrectCount(correctAnswers);
+
     if (finalScore >= 70) {
       setShowConfetti(true);
     }
     setSubmitted(true);
-  }, [mcqs, selectedAnswers]);
+
+    // Award XP to authenticated users
+    const earnedXP = correctAnswers * 5; // 5 XP per correct answer
+    setXpAwarded(earnedXP);
+
+    if (firebaseUser?.uid && earnedXP > 0) {
+      try {
+        await awardXP(firebaseUser.uid, earnedXP, 'quiz', {
+          subject,
+          chapter: chapterTitle,
+          score: finalScore,
+          questionsAnswered: mcqs.length,
+          correctAnswers
+        });
+        await updateUserStats(firebaseUser.uid, {
+          questionsAnswered: mcqs.length,
+          correctAnswers: correctAnswers,
+          quizzesCompleted: 1,
+          perfectScores: finalScore === 100 ? 1 : 0
+        });
+      } catch (error) {
+        console.error('Error awarding XP:', error);
+      }
+    }
+  }, [mcqs, selectedAnswers, firebaseUser, subject, chapterTitle]);
 
   const handleNext = useCallback(() => {
     if (currentQuestionIndex < mcqs.length - 1) {
@@ -128,6 +160,8 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
       setScore(0);
       setShowConfetti(false);
       setTimeLeft(17);
+      setXpAwarded(0);
+      setCorrectCount(0);
     }
   };
 
@@ -222,6 +256,31 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* XP Earned Banner */}
+            {xpAwarded > 0 && (
+              <div className="flex items-center justify-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <span className="font-semibold text-primary">+{xpAwarded} XP Earned!</span>
+              </div>
+            )}
+
+            {/* Stats Summary */}
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-2xl font-bold text-primary">{correctCount}</p>
+                <p className="text-xs text-muted-foreground">Correct</p>
+              </div>
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-2xl font-bold">{mcqs.length - correctCount}</p>
+                <p className="text-xs text-muted-foreground">Incorrect</p>
+              </div>
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-2xl font-bold">{mcqs.length}</p>
+                <p className="text-xs text-muted-foreground">Total</p>
+              </div>
+            </div>
+
+            {/* Score Progress Bar */}
             <div className="relative h-4 w-full overflow-hidden rounded-full bg-secondary">
               <div
                 className="h-full w-full flex-1 bg-primary transition-all"

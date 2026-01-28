@@ -176,7 +176,7 @@ export default function DailyQuizModal({ open, onOpenChange, onComplete }: Daily
     };
 
     const currentQuestion = questions[currentQuestionIndex];
-    const progressPercentage = ((currentQuestionIndex + 1) / questions.length) * 100;
+    const progressPercentage = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
@@ -323,7 +323,23 @@ export default function DailyQuizModal({ open, onOpenChange, onComplete }: Daily
                             )}
                         </div>
                     </div>
-                ) : null}
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                        <div className="text-6xl">🤔</div>
+                        <h3 className="text-xl font-bold">No Questions Available</h3>
+                        <p className="text-muted-foreground text-center max-w-sm">
+                            We couldn't generate quiz questions at this time. This might be a temporary issue.
+                        </p>
+                        <div className="flex gap-3">
+                            <Button variant="outline" onClick={handleClose}>
+                                Close
+                            </Button>
+                            <Button onClick={generateQuiz}>
+                                Try Again
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
     );
