@@ -127,12 +127,12 @@ export default function Home() {
     .slice(0, 10);
 
   return (
-    <>
+    <div className="bg-home-gradient">
       <motion.section 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative w-full overflow-hidden bg-background py-20 md:py-32"
+        className="relative w-full overflow-hidden py-20 md:py-32"
       >
         <div className="absolute inset-0 z-0">
           <motion.div 
@@ -248,7 +248,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="pricing" className="w-full py-16 md:py-32 bg-background relative overflow-hidden">
+      <section id="pricing" className="w-full py-16 md:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:40px_40px]"></div>
         <div className="container relative z-10 px-4 md:px-6">
           <motion.div 
@@ -397,7 +397,7 @@ export default function Home() {
       </section>
 
       {/* Leaderboards Section */}
-      <section id="leaderboards" className="w-full bg-muted py-16 md:py-24">
+      <section id="leaderboards" className="w-full py-16 md:py-24">
         <div className="container px-4 md:px-6">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
@@ -520,7 +520,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="testimonials" className="w-full bg-background py-20 md:py-32 relative overflow-hidden">
+      <section id="testimonials" className="w-full py-20 md:py-32 relative overflow-hidden">
         <div className="container relative z-10 px-4 md:px-6">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -586,7 +586,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="faq" className="w-full bg-muted py-16 md:py-24">
+      <section id="faq" className="w-full py-16 md:py-24">
         <div className="container px-4 md:px-6">
           <h2 className="mb-12 text-center text-3xl font-bold tracking-tighter sm:text-4xl">
             Frequently Asked Questions
@@ -627,6 +627,6 @@ export default function Home() {
           </Accordion>
         </div>
       </section>
-    </>
+    </div>
   );
 }

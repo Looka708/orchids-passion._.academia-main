@@ -89,6 +89,16 @@
   }
 }
 
+@layer utilities {
+  .bg-home-gradient {
+    background-color: hsl(var(--background));
+    background-image:
+      linear-gradient(to bottom, transparent, hsla(142, 76%, 36%, 0.03) 50%, transparent),
+      radial-gradient(at 0% 0%, hsla(142, 76%, 36%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(142, 76%, 36%, 0.1) 0px, transparent 50%);
+  }
+}
+
 /* =========================================================
    GLOBAL BEHAVIOR
    ========================================================= */
