@@ -93,9 +93,25 @@
   .bg-home-gradient {
     background-color: hsl(var(--background));
     background-image:
-      linear-gradient(to bottom, transparent, hsla(142, 76%, 36%, 0.03) 50%, transparent),
-      radial-gradient(at 0% 0%, hsla(142, 76%, 36%, 0.1) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(142, 76%, 36%, 0.1) 0px, transparent 50%);
+      radial-gradient(at 0% 0%, hsla(142, 76%, 36%, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(142, 76%, 36%, 0.08) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, hsla(142, 76%, 36%, 0.03) 0px, transparent 50%);
+  }
+
+  .glass-card {
+    @apply bg-background/60 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-[0_8px_32px_0_rgba(0, 0, 0, 0.08)];
+  }
+
+  .glass-header {
+    @apply bg-background/70 backdrop-blur-md border-b border-white/20 dark:border-white/10 sticky top-0 z-50;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-primary/60;
+  }
+
+  .button-glow {
+    @apply transition-all duration-300 hover:shadow-[0_0_20px_rgba(var(--primary), 0.35)] hover:scale-[1.02] active:scale-[0.98];
   }
 }
 
