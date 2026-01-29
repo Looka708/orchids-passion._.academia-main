@@ -14,6 +14,7 @@ import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 import TourDriver from "@/components/onboarding/TourDriver";
 import QuickStart from "@/components/dashboard/QuickStart";
 import { useState } from "react";
+import QuizLoading from "@/components/quiz/QuizLoading";
 
 export default function DashboardPage() {
     const { isAuthenticated, user, firebaseUser, isLoading: authLoading, refreshUser, emailVerified } = useAuth();
@@ -50,16 +51,7 @@ export default function DashboardPage() {
 
     // Wait for auth to finish loading before making any decisions
     if (authLoading) {
-        return (
-            <div className="min-h-screen bg-muted/40 py-8">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col items-center justify-center py-16">
-                        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                        <p className="text-lg font-semibold">Checking authentication...</p>
-                    </div>
-                </div>
-            </div>
-        );
+        return <QuizLoading className="min-h-screen" />;
     }
 
     // After auth loads, check if user is authenticated
@@ -92,17 +84,7 @@ export default function DashboardPage() {
 
     // Show loading while progress is being fetched
     if (progressLoading && !progress) {
-        return (
-            <div className="min-h-screen bg-muted/40 py-8">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col items-center justify-center py-16">
-                        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                        <p className="text-lg font-semibold">Loading your progress...</p>
-                        <p className="text-sm text-muted-foreground mt-2">This may take a moment</p>
-                    </div>
-                </div>
-            </div>
-        );
+        return <QuizLoading className="min-h-screen" />;
     }
 
     // Default progress for custom users if not found (fallback)

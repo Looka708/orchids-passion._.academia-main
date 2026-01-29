@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { awardXP, updateUserStats, getUserProgress, updateStreak } from "@/lib/progress/progressService";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
+import QuizLoading from "./QuizLoading";
 
 interface DailyQuizModalProps {
     open: boolean;
@@ -29,9 +30,11 @@ export default function DailyQuizModal({ open, onOpenChange, onComplete }: Daily
     const [correctAnswers, setCorrectAnswers] = useState(0);
     const [alreadyCompletedToday, setAlreadyCompletedToday] = useState(false);
     const [checkingCompletion, setCheckingCompletion] = useState(true);
+    const [animationComplete, setAnimationComplete] = useState(false);
 
     const generateQuiz = useCallback(async () => {
         setLoading(true);
+        setAnimationComplete(false);
         try {
             const response = await fetch('/api/generate-daily-quiz', {
                 method: 'POST',
@@ -197,10 +200,7 @@ export default function DailyQuizModal({ open, onOpenChange, onComplete }: Daily
                 </DialogHeader>
 
                 {checkingCompletion ? (
-                    <div className="flex flex-col items-center justify-center py-12">
-                        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                        <p className="text-muted-foreground">Checking quiz availability...</p>
-                    </div>
+                    <QuizLoading isModal />
                 ) : alreadyCompletedToday ? (
                     <div className="flex flex-col items-center justify-center py-8 space-y-4">
                         <div className="text-6xl">✅</div>
@@ -222,11 +222,8 @@ export default function DailyQuizModal({ open, onOpenChange, onComplete }: Daily
                             Close
                         </Button>
                     </div>
-                ) : loading ? (
-                    <div className="flex flex-col items-center justify-center py-12">
-                        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                        <p className="text-muted-foreground">Generating your daily quiz...</p>
-                    </div>
+                ) : (loading || !animationComplete) ? (
+                    <QuizLoading isModal onComplete={() => setAnimationComplete(true)} />
                 ) : quizCompleted ? (
                     <div className="flex flex-col items-center justify-center py-8 space-y-4">
                         <div className="relative">

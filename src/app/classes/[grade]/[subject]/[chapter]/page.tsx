@@ -7,6 +7,7 @@ import { MCQ } from '@/lib/types';
 import { notFound, useParams } from 'next/navigation';
 import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import QuizLoading from "@/components/quiz/QuizLoading";
 
 const createSlug = (title: string) => {
     return title.toLowerCase()
@@ -24,6 +25,7 @@ export default function DynamicChapterPage() {
     const [chapterTitle, setChapterTitle] = useState<string | null>(null);
     const [mcqs, setMcqs] = useState<MCQ[]>([]);
     const [loading, setLoading] = useState(true);
+    const [animationComplete, setAnimationComplete] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const courseType = /^\d+$/.test(grade) ? `class-${grade}` : grade;
@@ -87,13 +89,8 @@ export default function DynamicChapterPage() {
         return notFound();
     }
 
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                <p className="text-muted-foreground font-medium text-lg">Loading test questions...</p>
-            </div>
-        );
+    if (loading || !animationComplete) {
+        return <QuizLoading onComplete={() => setAnimationComplete(true)} />;
     }
 
     if (error) {
