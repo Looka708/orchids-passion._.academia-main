@@ -256,9 +256,9 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
             </div>
           )}
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl">Test Results</CardTitle>
-            <CardDescription>
-              You scored <span className="font-bold text-primary">{score.toFixed(0)}%</span>
+            <CardTitle className={cn("text-3xl", isUrdu(subject) && "font-urdu")}>Test Results</CardTitle>
+            <CardDescription className={cn(isUrdu(subject) && "font-urdu text-xl")}>
+              You scored <span className="font-bold text-primary">{score.toFixed(0)}%</span> in {subject}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -304,21 +304,39 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
                   {mcq.questionImage && (
                     <div className="mb-4 flex justify-center" dangerouslySetInnerHTML={{ __html: mcq.questionImage }} />
                   )}
-                  {mcq.questionText && <p className={cn("font-semibold", (mcq.language === 'urdu' || isUrdu(mcq.questionText)) ? 'font-urdu text-2xl text-right leading-relaxed mb-2' : '')}>{`${index + 1}. ${mcq.questionText}`}</p>}
+                  {mcq.questionText && (
+                    <p className={cn(
+                      "font-semibold",
+                      (mcq.language === 'urdu' || isUrdu(mcq.questionText)) ? 'font-urdu text-3xl mb-2' : ''
+                    )}>
+                      {`${index + 1}. ${mcq.questionText}`}
+                    </p>
+                  )}
 
-                  <div className={cn("mt-2 text-sm space-y-1", (mcq.language === 'urdu' || isUrdu(mcq.questionText)) ? 'font-urdu text-xl text-right' : '')}>
+                  <div className={cn("mt-2 text-sm space-y-1", (mcq.language === 'urdu' || isUrdu(mcq.questionText)) ? 'font-urdu text-2xl text-right' : '')}>
                     {(() => {
                       const selectedIdx = selectedAnswers[index];
                       const userAnswer = selectedIdx !== undefined ? getOptionValue(mcq.options[parseInt(selectedIdx)]) : "";
                       return (
                         <>
-                          <p className={cn("flex items-center gap-2", (mcq.language === 'urdu' || isUrdu(mcq.questionText)) ? 'flex-row-reverse' : '', isCorrect ? 'text-green-600' : 'text-red-600')}>
-                            <span>{isUrdu(userAnswer) || mcq.language === 'urdu' ? 'آپ کا جواب:' : 'Your answer:'} {userAnswer || (mcq.language === 'urdu' ? "جواب نہیں دیا" : "Not answered")}</span>
-                            {isCorrect ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+                          <p className={cn(
+                            "flex items-center gap-2",
+                            (mcq.language === 'urdu' || isUrdu(userAnswer) || isUrdu(mcq.questionText)) ? 'flex-row-reverse' : '',
+                            isCorrect ? 'text-green-600' : 'text-red-600'
+                          )}>
+                            <span className={isUrdu(userAnswer) || mcq.language === 'urdu' ? 'font-urdu text-xl' : ''}>
+                              {isUrdu(userAnswer) || mcq.language === 'urdu' ? 'آپ کا جواب:' : 'Your answer:'} {userAnswer || (mcq.language === 'urdu' ? "جواب نہیں دیا" : "Not answered")}
+                            </span>
+                            {isCorrect ? <CheckCircle className="h-5 w-5 flex-shrink-0" /> : <XCircle className="h-5 w-5 flex-shrink-0" />}
                           </p>
-                          {!isCorrect && <p className="text-green-600">
-                            {isUrdu(mcq.correctAnswer) || mcq.language === 'urdu' ? 'صحیح جواب:' : 'Correct answer:'} {mcq.correctAnswer}
-                          </p>}
+                          {!isCorrect && (
+                            <p className={cn(
+                              "text-green-600",
+                              (mcq.language === 'urdu' || isUrdu(mcq.correctAnswer)) ? 'text-right font-urdu text-2xl' : ''
+                            )}>
+                              {isUrdu(mcq.correctAnswer) || mcq.language === 'urdu' ? 'صحیح جواب:' : 'Correct answer:'} {mcq.correctAnswer}
+                            </p>
+                          )}
                         </>
                       );
                     })()}
@@ -354,7 +372,7 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
           <CardHeader>
             <Progress value={(currentQuestionIndex + 1) / mcqs.length * 100} className="mb-4" />
             <div className="flex justify-between items-center">
-              <CardTitle className={cn("text-xl", (currentMcq.language === 'urdu' || isUrdu(currentMcq.questionText)) ? 'font-urdu text-2xl text-right' : '')}>
+              <CardTitle className={cn("text-xl", (currentMcq.language === 'urdu' || isUrdu(currentMcq.questionText)) ? 'font-urdu text-3xl' : '')}>
                 {`Question ${currentQuestionIndex + 1} of ${mcqs.length}`}
               </CardTitle>
               <div className="flex items-center gap-2 font-bold text-lg">
@@ -362,9 +380,14 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
                 <span>{timeLeft}s</span>
               </div>
             </div>
-            {currentMcq.questionText && <CardDescription className={cn("pt-4 text-lg", (currentMcq.language === 'urdu' || isUrdu(currentMcq.questionText)) ? 'font-urdu text-xl text-right' : '')}>
-              {currentMcq.questionText}
-            </CardDescription>}
+            {currentMcq.questionText && (
+              <CardDescription className={cn(
+                "pt-4 text-lg",
+                (currentMcq.language === 'urdu' || isUrdu(currentMcq.questionText)) ? 'font-urdu text-3xl' : ''
+              )}>
+                {currentMcq.questionText}
+              </CardDescription>
+            )}
             {currentMcq.questionImage && (
               <div className="pt-4 flex justify-center" dangerouslySetInnerHTML={{ __html: currentMcq.questionImage }} />
             )}
@@ -392,19 +415,17 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
                         (isUrduMcq || isOptionUrdu) ? 'flex-row-reverse space-x-reverse' : ''
                       )}
                     >
-                      <RadioGroupItem value={optionIdxString} id={optionId} className={cn((isUrduMcq || isOptionUrdu) ? 'ml-2' : 'mr-2')} />
+                      <RadioGroupItem value={optionIdxString} id={optionId} className={cn((isUrduMcq || isOptionUrdu) ? 'order-last mr-0 ml-2' : 'mr-2')} />
                       <Label
                         htmlFor={optionId}
                         className={cn(
                           "flex w-full cursor-pointer py-1",
-                          (isUrduMcq || isOptionUrdu) ? 'justify-end text-right' : 'justify-start text-left',
-                          typeof option !== 'string' ? 'flex-col items-center justify-center' : 'items-center'
+                          (isUrduMcq || isOptionUrdu) ? 'font-urdu text-3xl pr-2' : 'items-center',
+                          typeof option !== 'string' ? 'flex-col items-center justify-center' : ''
                         )}
                       >
                         {typeof option === 'string' ? (
-                          <span className={cn((isUrduMcq || isUrdu(option)) ? 'font-urdu text-xl leading-relaxed' : 'text-base')}>
-                            {option}
-                          </span>
+                          <span>{option}</span>
                         ) : (
                           <>
                             <div dangerouslySetInnerHTML={{ __html: option.svg }} />

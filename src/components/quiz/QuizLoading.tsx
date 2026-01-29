@@ -7,11 +7,11 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const tips = [
-    "Read each question carefully before answering.",
-    "Trust your first instinct - it's often correct!",
-    "Manage your time effectively during the test.",
-    "Persistence is the key to mastering any subject.",
-    "Mistakes are proof that you are trying and learning.",
+    { en: "Read each question carefully before answering.", ur: "جواب دینے سے پہلے ہر سوال کو غور سے پڑھیں۔" },
+    { en: "Trust your first instinct - it's often correct!", ur: "اپنے پہلے وجدان پر بھروسہ کریں - یہ اکثر درست ہوتا ہے!" },
+    { en: "Manage your time effectively during the test.", ur: "ٹیسٹ کے دوران اپنے وقت کا مؤثر طریقے سے انتظام کریں۔" },
+    { en: "Persistence is the key to mastering any subject.", ur: "مستقل مزاجی کسی بھی مضمون میں مہارت حاصل کرنے کی کلید ہے۔" },
+    { en: "Mistakes are proof that you are trying and learning.", ur: "غلطیاں اس بات کا ثبوت ہیں کہ آپ کوشش کر رہے ہیں اور سیکھ رہے ہیں۔" },
 ];
 
 interface QuizLoadingProps {
@@ -164,8 +164,11 @@ export default function QuizLoading({ className, isModal = false, onComplete }: 
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Study Tip</p>
-                                <p className="text-foreground/80 font-medium italic">
-                                    "{tips[tipIndex]}"
+                                <p className="text-foreground/80 font-medium italic mb-1">
+                                    "{tips[tipIndex].en}"
+                                </p>
+                                <p className="text-foreground/70 font-urdu text-sm leading-relaxed text-left border-t border-primary/10 pt-1 mt-1">
+                                    {tips[tipIndex].ur}
                                 </p>
                             </div>
                         </div>

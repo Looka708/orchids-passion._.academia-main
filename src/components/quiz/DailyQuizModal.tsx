@@ -11,6 +11,9 @@ import { awardXP, updateUserStats, getUserProgress, updateStreak } from "@/lib/p
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import QuizLoading from "./QuizLoading";
+import { cn } from "@/lib/utils";
+
+const isUrdu = (text: string | null | undefined) => /[\u0600-\u06FF]/.test(text || "");
 
 interface DailyQuizModalProps {
     open: boolean;
@@ -274,7 +277,12 @@ export default function DailyQuizModal({ open, onOpenChange, onComplete }: Daily
 
                         {/* Question */}
                         <div className="bg-muted/50 p-6 rounded-lg">
-                            <h4 className="text-lg font-semibold mb-4">{currentQuestion.questionText}</h4>
+                            <h4 className={cn(
+                                "text-lg font-semibold mb-4",
+                                isUrdu(currentQuestion.questionText) && "font-urdu text-3xl text-right leading-relaxed"
+                            )}>
+                                {currentQuestion.questionText}
+                            </h4>
 
                             {/* Options */}
                             <div className="space-y-3">
@@ -283,25 +291,29 @@ export default function DailyQuizModal({ open, onOpenChange, onComplete }: Daily
                                     const isCorrect = option === currentQuestion.correctAnswer;
                                     const showCorrectAnswer = showResult && isCorrect;
                                     const showWrongAnswer = showResult && isSelected && !isCorrect;
+                                    const isOptionUrdu = isUrdu(option);
 
                                     return (
                                         <button
                                             key={index}
                                             onClick={() => handleAnswerSelect(option)}
                                             disabled={showResult}
-                                            className={`w-full text-left p-4 rounded-lg border-2 transition-all ${showCorrectAnswer
-                                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                                                : showWrongAnswer
-                                                    ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                                                    : isSelected
-                                                        ? 'border-primary bg-primary/10'
-                                                        : 'border-border hover:border-primary/50'
-                                                } ${showResult ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                            className={cn(
+                                                "w-full text-left p-4 rounded-lg border-2 transition-all",
+                                                showCorrectAnswer ? 'border-green-500 bg-green-50 dark:bg-green-900/20' :
+                                                    showWrongAnswer ? 'border-red-500 bg-red-50 dark:bg-red-900/20' :
+                                                        isSelected ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50',
+                                                showResult ? 'cursor-not-allowed' : 'cursor-pointer',
+                                                isOptionUrdu && "font-urdu text-2xl text-right"
+                                            )}
                                         >
-                                            <div className="flex items-center justify-between">
+                                            <div className={cn(
+                                                "flex items-center justify-between",
+                                                isOptionUrdu && "flex-row-reverse"
+                                            )}>
                                                 <span>{option}</span>
-                                                {showCorrectAnswer && <CheckCircle2 className="h-5 w-5 text-green-600" />}
-                                                {showWrongAnswer && <XCircle className="h-5 w-5 text-red-600" />}
+                                                {showCorrectAnswer && <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />}
+                                                {showWrongAnswer && <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />}
                                             </div>
                                         </button>
                                     );

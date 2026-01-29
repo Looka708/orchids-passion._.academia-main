@@ -1,4 +1,5 @@
 @import url('https://cdn.jsdelivr.net/npm/jameel-noori-nastaliq-kasheeda@1.1.0/jameel-noori-nastaliq-kasheeda.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400..700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -128,9 +129,12 @@ html {
    URDU & RTL SUPPORT
    ========================================================= */
 .font-urdu {
-  font-family: 'JameelNooriNastaliqKashida', 'Jameel Noori Nastalee', var(--font-urdu), serif;
+  font-family: 'JameelNooriNastaliqKashida', 'Jameel Noori Nastalee', 'Noto Nastaliq Urdu', 'DejaVu Sans', serif;
   line-height: 2.2;
   font-display: swap;
+  direction: rtl;
+  text-align: right;
+  font-size: 1.75rem;
 }
 
 .rtl-text {
@@ -149,18 +153,13 @@ html {
   text-align: right;
 }
 
-/* Adjust font size globally for Urdu elements to match Latin visual weight */
-.font-urdu {
-  font-size: 1.15em;
-}
-
 /* Fix for overlapping lines in Urdu text */
-p.font-urdu,
-span.font-urdu,
-div.font-urdu,
-li.font-urdu {
-  padding-top: 0.3em;
-  padding-bottom: 0.3em;
+.font-urdu p,
+.font-urdu span,
+.font-urdu div,
+.font-urdu li {
+  padding-top: 0.4em;
+  padding-bottom: 0.4em;
 }
 
 .rtl-list {
