@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:passion_academia/core/theme.dart';
-import 'package:passion_academia/screens/home/home_screen.dart';
+import 'package:passion_academia/core/providers/auth_provider.dart';
+import 'package:passion_academia/core/providers/course_provider.dart';
+import 'package:passion_academia/screens/auth/welcome_screen.dart';
 
 void main() {
-  runApp(const PassionAcademiaApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => CourseProvider()),
+      ],
+      child: const PassionAcademiaApp(),
+    ),
+  );
 }
 
 class PassionAcademiaApp extends StatelessWidget {
@@ -17,7 +28,7 @@ class PassionAcademiaApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: const HomeScreen(),
+      home: const WelcomeScreen(),
     );
   }
 }

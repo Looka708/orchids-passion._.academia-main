@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-
-import 'package:passion_academia/models/course.dart';
+import 'package:provider/provider.dart';
 import 'package:passion_academia/screens/course/course_detail_screen.dart';
 import 'package:passion_academia/screens/profile/profile_screen.dart';
+import 'package:passion_academia/screens/course/courses_screen.dart';
+import 'package:passion_academia/screens/quiz/tests_screen.dart';
 import 'package:passion_academia/widgets/course_card.dart';
+import 'package:passion_academia/widgets/common/app_header.dart';
+import 'package:passion_academia/widgets/common/stat_card.dart';
+import 'package:passion_academia/core/providers/course_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,37 +18,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-
-  final List<Course> _courses = [
-    Course(
-      id: '1',
-      title: '9th Class Preparation',
-      imageUrl:
-          'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=600',
-      subjectCount: 8,
-    ),
-    Course(
-      id: '2',
-      title: 'PAF Cadet Test Prep',
-      imageUrl:
-          'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=600',
-      subjectCount: 5,
-    ),
-    Course(
-      id: '3',
-      title: 'AFNS Test Preparation',
-      imageUrl:
-          'https://images.unsplash.com/photo-1576091160550-217359f42f8c?auto=format&fit=crop&q=80&w=600',
-      subjectCount: 4,
-    ),
-    Course(
-      id: '4',
-      title: 'MCJ/MCM Entrance Prep',
-      imageUrl:
-          'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=600',
-      subjectCount: 6,
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -78,9 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return _buildHome();
       case 1:
-        return _buildCourses();
+        return const CoursesScreen();
       case 2:
-        return _buildTests();
+        return const TestsScreen();
       case 3:
         return const ProfileScreen();
       default:
@@ -88,68 +61,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  PreferredSizeWidget _buildAppBar(String title, {bool showProfile = true}) {
-    return AppBar(
-      title: title == 'Passion Academia'
-          ? Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.auto_stories,
-                      color: Colors.white, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Passion',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    Text(
-                      'Academia',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            )
-          : Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      actions: [
-        if (showProfile) ...[
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none),
-          ),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            child: Icon(Icons.person,
-                size: 20, color: Theme.of(context).colorScheme.primary),
-          ),
-          const SizedBox(width: 16),
-        ],
-      ],
-    );
-  }
-
   Widget _buildHome() {
+    final courseProvider = context.watch<CourseProvider>();
+    final featuredCourses = courseProvider.featuredCourses;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: _buildAppBar('Passion Academia'),
+      appBar: const AppHeader(transparent: true),
       body: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
@@ -282,8 +200,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Image.asset(
                                 'assets/images/main_hero.png',
                                 width: double.infinity,
-                                height: 300,
-                                fit: BoxFit.cover,
+                                height: 220,
+                                fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
                                     height: 300,
@@ -323,24 +241,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 40),
 
-                  // Stats section (Floating style)
+                  // Stats section (Reusable StatCard usage)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Row(
                       children: [
-                        Expanded(
-                          child: _buildFloatingStatCard(
-                            Icons.book_outlined,
-                            '5K+',
-                            'Courses',
+                        const Expanded(
+                          child: StatCard(
+                            icon: Icons.book_outlined,
+                            value: '5K+',
+                            label: 'Courses',
                           ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: _buildFloatingStatCard(
-                            Icons.play_circle_outline,
-                            '2K+',
-                            'Videos',
+                          child: StatCard(
+                            icon: Icons.play_circle_outline,
+                            value: '2K+',
+                            label: 'Videos',
+                            color: Theme.of(context).colorScheme.secondary,
                           ),
                         ),
                       ],
@@ -356,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Our Programs',
+                          'Featured Programs',
                           style:
                               Theme.of(context).textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
@@ -375,19 +294,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _courses.length,
+                      itemCount: featuredCourses.length,
                       itemBuilder: (context, index) {
                         return Container(
-                          width: 240,
+                          width: 280,
                           margin: const EdgeInsets.symmetric(horizontal: 8),
                           child: CourseCard(
-                            course: _courses[index],
+                            size: CardSize.featured,
+                            course: featuredCourses[index],
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => CourseDetailScreen(
-                                      course: _courses[index]),
+                                      course: featuredCourses[index]),
                                 ),
                               );
                             },
@@ -406,13 +326,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'What Students Say',
+                          'Student Success Stories',
                           style:
                               Theme.of(context).textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
                         _buildTestimonialCard(
                           'Aisha K.',
                           'AFNS Aspirant',
@@ -438,73 +358,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFloatingStatCard(IconData icon, String value, String label) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: Theme.of(context).colorScheme.primary),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildTestimonialCard(String name, String role, String quote) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+        color: Theme.of(context).colorScheme.secondary.withOpacity(0.05),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: [
-              ...List.generate(
-                  5,
-                  (index) =>
-                      const Icon(Icons.star, size: 16, color: Colors.amber)),
-            ],
+            children: List.generate(
+                5,
+                (index) =>
+                    const Icon(Icons.star, size: 16, color: Colors.amber)),
           ),
           const SizedBox(height: 12),
           Text(
@@ -536,115 +407,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCourses() {
-    return Scaffold(
-      appBar: _buildAppBar('All Programs', showProfile: false),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Explore All Courses',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Filter and find the perfect program for your academic needs.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 24),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.55,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: _courses.length,
-                itemBuilder: (context, index) {
-                  return CourseCard(
-                    course: _courses[index],
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              CourseDetailScreen(course: _courses[index]),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTests() {
-    final testPrepCourses =
-        _courses.where((c) => c.title.toLowerCase().contains('prep')).toList();
-
-    return Scaffold(
-      appBar: _buildAppBar('Mock Tests', showProfile: false),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Entrance Test Prep',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Specialized preparation for AFNS, PAF, and Military Colleges.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 24),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.55,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: testPrepCourses.length,
-                itemBuilder: (context, index) {
-                  return CourseCard(
-                    course: testPrepCourses[index],
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CourseDetailScreen(
-                              course: testPrepCourses[index]),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

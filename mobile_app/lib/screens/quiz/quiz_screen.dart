@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:passion_academia/core/theme.dart';
 import 'package:passion_academia/models/course.dart';
+import 'package:passion_academia/widgets/common/app_header.dart';
 
 enum QuizState { intro, quiz, results }
 
@@ -18,25 +19,25 @@ class _QuizScreenState extends State<QuizScreen> {
   QuizState _state = QuizState.intro;
   int _currentQuestionIndex = 0;
   int _score = 0;
-  int _timeLeft = 17;
+  int _timeLeft = 20;
   Timer? _timer;
   final Map<int, int> _selectedAnswers = {};
 
   final List<Question> _mockQuestions = [
-    Question(
+    const Question(
       id: '1',
       text: 'What is the powerhouse of the cell?',
       options: ['Nucleus', 'Mitochondria', 'Ribosome', 'Golgi Apparatus'],
       correctAnswer: 'Mitochondria',
     ),
-    Question(
+    const Question(
       id: '2',
       text: 'پودے اپنی خوراک کس عمل سے تیار کرتے ہیں؟',
       options: ['عمل تنفس', 'فوٹوسنتھیسز', 'انجذاب', 'انجماد'],
       correctAnswer: 'فوٹوسنتھیسز',
       language: 'urdu',
     ),
-    Question(
+    const Question(
       id: '3',
       text: 'Which gas do plants absorb from the atmosphere?',
       options: ['Oxygen', 'Nitrogen', 'Carbon Dioxide', 'Hydrogen'],
@@ -50,7 +51,7 @@ class _QuizScreenState extends State<QuizScreen> {
       _currentQuestionIndex = 0;
       _score = 0;
       _selectedAnswers.clear();
-      _timeLeft = 17;
+      _timeLeft = 20;
     });
     _startTimer();
   }
@@ -63,16 +64,23 @@ class _QuizScreenState extends State<QuizScreen> {
           _timeLeft--;
         });
       } else {
-        _nextQuestion();
+        _handleTimeUp();
       }
     });
+  }
+
+  void _handleTimeUp() {
+    if (!_selectedAnswers.containsKey(_currentQuestionIndex)) {
+      _selectedAnswers[_currentQuestionIndex] = -1; // -1 for skipped/timed out
+    }
+    _nextQuestion();
   }
 
   void _nextQuestion() {
     if (_currentQuestionIndex < _mockQuestions.length - 1) {
       setState(() {
         _currentQuestionIndex++;
-        _timeLeft = 17;
+        _timeLeft = 20;
       });
       _startTimer();
     } else {
@@ -84,8 +92,9 @@ class _QuizScreenState extends State<QuizScreen> {
     _timer?.cancel();
     int correct = 0;
     _selectedAnswers.forEach((qIdx, oIdx) {
-      if (_mockQuestions[qIdx].options[oIdx] ==
-          _mockQuestions[qIdx].correctAnswer) {
+      if (oIdx != -1 &&
+          _mockQuestions[qIdx].options[oIdx] ==
+              _mockQuestions[qIdx].correctAnswer) {
         correct++;
       }
     });
@@ -104,10 +113,16 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.subjectTitle} Quiz'),
+      appBar: AppHeader(
+        title: _state == QuizState.quiz
+            ? 'Question ${_currentQuestionIndex + 1}/${_mockQuestions.length}'
+            : '${widget.subjectTitle} Quiz',
+        showProfile: false,
       ),
-      body: _buildBody(),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _buildBody(),
+      ),
     );
   }
 
@@ -123,35 +138,51 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Widget _buildIntro() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.quiz, size: 80, color: AppTheme.primaryColor),
-            const SizedBox(height: 24),
-            Text(
-              'Start Your Test',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'You are about to start a test on ${widget.subjectTitle}. Total questions: ${_mockQuestions.length}',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color),
+            child: Icon(Icons.quiz_outlined,
+                size: 80, color: Theme.of(context).colorScheme.primary),
+          ),
+          const SizedBox(height: 32),
+          Text(
+            'Ready to test your knowledge?',
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall
+                ?.copyWith(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Subject: ${widget.subjectTitle}\nQuestions: ${_mockQuestions.length}\nTime: 20s per question',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+                height: 1.6),
+          ),
+          const SizedBox(height: 48),
+          ElevatedButton(
+            onPressed: _startQuiz,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Begin Challenge'),
+                SizedBox(width: 8),
+                Icon(Icons.arrow_forward, size: 20),
+              ],
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _startQuiz,
-              child: const Text('Begin Test'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -165,144 +196,223 @@ class _QuizScreenState extends State<QuizScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LinearProgressIndicator(
-            value: (_currentQuestionIndex + 1) / _mockQuestions.length,
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(height: 16),
+          // Timer and Progress
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Question ${_currentQuestionIndex + 1}/${_mockQuestions.length}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Row(
-                children: [
-                  const Icon(Icons.timer_outlined, size: 20),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${_timeLeft}s',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 18),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: (_currentQuestionIndex + 1) / _mockQuestions.length,
+                    minHeight: 8,
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
                   ),
-                ],
+                ),
               ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Text(
-                question.text,
-                style: isUrdu
-                    ? AppTheme.urduStyle(fontSize: 24)
-                    : Theme.of(context).textTheme.titleLarge,
-                textAlign: isUrdu ? TextAlign.right : TextAlign.left,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          ...question.options.asMap().entries.map((entry) {
-            final idx = entry.key;
-            final option = entry.value;
-            final isSelected = _selectedAnswers[_currentQuestionIndex] == idx;
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: OutlinedButton(
-                onPressed: () {
-                  setState(() {
-                    _selectedAnswers[_currentQuestionIndex] = idx;
-                  });
-                },
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: isSelected
-                      ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                      : null,
-                  side: BorderSide(
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.outline,
-                    width: isSelected ? 2 : 1,
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+              const SizedBox(width: 16),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _timeLeft <= 5
+                      ? Colors.red.withOpacity(0.1)
+                      : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: _timeLeft <= 5
+                          ? Colors.red
+                          : Theme.of(context).colorScheme.primary),
                 ),
                 child: Row(
                   children: [
-                    if (!isUrdu) ...[
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundColor: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.secondary,
-                        child: Text(
-                          String.fromCharCode(65 + idx),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isSelected
-                                ? Colors.white
-                                : Theme.of(context).textTheme.bodySmall?.color,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                    Expanded(
-                      child: Text(
-                        option,
-                        style: isUrdu
-                            ? AppTheme.urduStyle(
-                                fontSize: 20,
-                                color: isSelected
-                                    ? Theme.of(context).colorScheme.primary
-                                    : null)
-                            : TextStyle(
-                                color: isSelected
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Theme.of(context).colorScheme.onSurface,
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                        textAlign: isUrdu ? TextAlign.right : TextAlign.left,
+                    Icon(Icons.timer_outlined,
+                        size: 16,
+                        color: _timeLeft <= 5
+                            ? Colors.red
+                            : Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${_timeLeft}s',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _timeLeft <= 5
+                            ? Colors.red
+                            : Theme.of(context).colorScheme.primary,
                       ),
                     ),
-                    if (isUrdu) ...[
-                      const SizedBox(width: 12),
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundColor: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.secondary,
-                        child: Text(
-                          String.fromCharCode(65 + idx),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isSelected
-                                ? Colors.white
-                                : Theme.of(context).textTheme.bodySmall?.color,
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
-            );
-          }),
-          const Spacer(),
+            ],
+          ),
+          const SizedBox(height: 32),
+
+          // Question Card
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                  color:
+                      Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Text(
+              question.text,
+              style: isUrdu
+                  ? AppTheme.urduStyle(fontSize: 26)
+                  : Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(height: 1.4),
+              textAlign: isUrdu ? TextAlign.right : TextAlign.left,
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // Options
+          Expanded(
+            child: ListView.builder(
+              itemCount: question.options.length,
+              itemBuilder: (context, idx) {
+                final option = question.options[idx];
+                final isSelected =
+                    _selectedAnswers[_currentQuestionIndex] == idx;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _selectedAnswers[_currentQuestionIndex] = idx;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.1)
+                            : Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.outline,
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          if (!isUrdu) ...[
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).colorScheme.secondary,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                String.fromCharCode(65 + idx),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.color,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                          ],
+                          Expanded(
+                            child: Text(
+                              option,
+                              style: isUrdu
+                                  ? AppTheme.urduStyle(
+                                      fontSize: 22,
+                                      color: isSelected
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                          : null)
+                                  : TextStyle(
+                                      fontSize: 16,
+                                      color: isSelected
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                              textAlign:
+                                  isUrdu ? TextAlign.right : TextAlign.left,
+                            ),
+                          ),
+                          if (isUrdu) ...[
+                            const SizedBox(width: 16),
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).colorScheme.secondary,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                String.fromCharCode(65 + idx),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.color,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
           ElevatedButton(
             onPressed: _selectedAnswers.containsKey(_currentQuestionIndex)
                 ? _nextQuestion
                 : null,
             child: Text(_currentQuestionIndex == _mockQuestions.length - 1
-                ? 'Finish'
-                : 'Next'),
+                ? 'See Results'
+                : 'Confirm Answer'),
           ),
         ],
       ),
@@ -310,15 +420,30 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Widget _buildResults() {
+    final bool isPassed = _score >= 70;
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            const Icon(Icons.stars, size: 80, color: Colors.amber),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(30),
+              decoration: BoxDecoration(
+                color:
+                    (isPassed ? Colors.green : Colors.orange).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isPassed ? Icons.emoji_events : Icons.refresh,
+                size: 80,
+                color: isPassed ? Colors.green : Colors.orange,
+              ),
+            ),
+            const SizedBox(height: 24),
             Text(
-              'Quiz Completed!',
+              isPassed ? 'Excellent Work!' : 'Keep Practicing!',
               style: Theme.of(context)
                   .textTheme
                   .headlineMedium
@@ -326,72 +451,61 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Your Score: $_score%',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: _score >= 70
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
+              'You scored $_score% on this test.',
+              style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.bodySmall?.color),
             ),
             const SizedBox(height: 32),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _mockQuestions.length,
-              itemBuilder: (context, index) {
-                final question = _mockQuestions[index];
-                final selectedIdx = _selectedAnswers[index];
-                final isCorrect = selectedIdx != null &&
-                    question.options[selectedIdx] == question.correctAnswer;
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${index + 1}. ${question.text}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              isCorrect ? Icons.check_circle : Icons.cancel,
-                              color: isCorrect ? Colors.green : Colors.red,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                isCorrect
-                                    ? 'Correct: ${question.correctAnswer}'
-                                    : 'Incorrect. Correct: ${question.correctAnswer}',
-                                style: TextStyle(
-                                  color: isCorrect ? Colors.green : Colors.red,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+            // Stats Row
+            Row(
+              children: [
+                _buildResultStat(
+                    'Correct',
+                    '${(_score * _mockQuestions.length / 100).toInt()}',
+                    Colors.green),
+                const SizedBox(width: 16),
+                _buildResultStat(
+                    'XP Earned', isPassed ? '+50' : '+10', Colors.amber),
+              ],
             ),
-            const SizedBox(height: 24),
+
+            const SizedBox(height: 48),
             ElevatedButton(
               onPressed: _startQuiz,
-              child: const Text('Try Again'),
+              child: const Text('Retake Quiz'),
             ),
             const SizedBox(height: 12),
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Back to Course'),
+              child: const Text('Back to Dashboard'),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResultStat(String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+        ),
+        child: Column(
+          children: [
+            Text(label, style: const TextStyle(fontSize: 12)),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                  fontSize: 24, fontWeight: FontWeight.bold, color: color),
             ),
           ],
         ),

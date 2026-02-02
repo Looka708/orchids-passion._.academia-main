@@ -9,7 +9,7 @@ class Course {
   final double rating;
   final int students;
 
-  Course({
+  const Course({
     required this.id,
     required this.title,
     this.description = '',
@@ -28,7 +28,7 @@ class Subject {
   final String icon;
   final int lessonCount;
 
-  Subject({
+  const Subject({
     required this.id,
     required this.title,
     required this.icon,
@@ -43,7 +43,7 @@ class Chapter {
   final bool isLocked;
   final bool isCompleted;
 
-  Chapter({
+  const Chapter({
     required this.id,
     required this.title,
     this.videoUrl,
@@ -59,7 +59,7 @@ class Question {
   final String correctAnswer;
   final String? language;
 
-  Question({
+  const Question({
     required this.id,
     required this.text,
     required this.options,
@@ -75,7 +75,7 @@ class Testimonial {
   final String quote;
   final double rating;
 
-  Testimonial({
+  const Testimonial({
     required this.id,
     required this.name,
     required this.role,
@@ -89,7 +89,7 @@ class UserStats {
   final int streak;
   final int coursesEnrolled;
 
-  UserStats({
+  const UserStats({
     this.xp = 0,
     this.streak = 0,
     this.coursesEnrolled = 0,
@@ -103,7 +103,7 @@ class Achievement {
   final String icon;
   final bool isUnlocked;
 
-  Achievement({
+  const Achievement({
     required this.id,
     required this.title,
     required this.description,

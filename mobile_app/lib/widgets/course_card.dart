@@ -182,7 +182,7 @@ class CourseCard extends StatelessWidget {
                       onPressed: onTap,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 0),
-                        minimumSize: const Size(0, 36),
+                        minimumSize: const Size(0, 40),
                         textStyle: const TextStyle(fontSize: 12),
                       ),
                       child: const Row(
