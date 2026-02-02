@@ -7,6 +7,7 @@ import 'package:passion_academia/screens/auth/welcome_screen.dart';
 import 'package:passion_academia/screens/profile/personal_info_screen.dart';
 import 'package:passion_academia/widgets/infinity_loader.dart';
 import 'package:passion_academia/screens/admin/admin_panel_screen.dart';
+import 'package:passion_academia/core/services/firebase_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -160,6 +161,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             const SizedBox(height: 32),
+            _buildProfileCompletion(context, authProvider),
+            const SizedBox(height: 16),
 
             // Gamification Stats
             Padding(
@@ -188,11 +191,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const StatCard(
-                    value: '4/12',
-                    label: 'Courses Completed',
-                    icon: Icons.school,
-                  ),
+                  FutureBuilder<Map<String, dynamic>?>(
+                      future: FirebaseService.getProgressFromFirestore(
+                          authProvider.userProfile?.email ?? '',
+                          authProvider.token),
+                      builder: (context, snapshot) {
+                        final progress = snapshot.data;
+                        final stats =
+                            progress?['stats'] as Map<String, dynamic>?;
+                        final chaptersDone = stats?['chaptersCompleted'] ?? 0;
+
+                        return StatCard(
+                          value: '$chaptersDone',
+                          label: 'Lessons Completed',
+                          icon: Icons.school,
+                          color: Theme.of(context).colorScheme.primary,
+                        );
+                      }),
                 ],
               ),
             ),
@@ -264,6 +279,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileCompletion(BuildContext context, AuthProvider auth) {
+    final profile = auth.userProfile;
+    if (profile == null) return const SizedBox.shrink();
+
+    int completion = 0;
+    List<String> missing = [];
+
+    if (profile.name.isNotEmpty && profile.name != profile.email) {
+      completion += 30;
+    } else {
+      missing.add('Set your full name');
+    }
+
+    if (profile.photoUrl != null) {
+      completion += 40;
+    } else {
+      missing.add('Upload a profile picture');
+    }
+
+    if (profile.course != 'All') {
+      completion += 30;
+    } else {
+      missing.add('Set your target course');
+    }
+
+    if (completion == 100) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              Theme.of(context).colorScheme.primary.withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Complete Your Profile',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '$completion%',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: completion / 100,
+                minHeight: 6,
+                backgroundColor:
+                    Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...missing.map((m) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.add_circle_outline,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Text(m, style: const TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                )),
           ],
         ),
       ),

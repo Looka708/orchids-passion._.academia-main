@@ -41,8 +41,8 @@ class CourseProvider extends ChangeNotifier {
       _courses = (data as List).map((json) => Course.fromMap(json)).toList();
     } catch (e) {
       debugPrint('Error fetching courses: $e');
-      // Fallback to mock data if fetch fails
-      _courses = _mockCourses;
+      // No fallback to mock data, let the UI handle empty list or show error
+      _courses = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -54,96 +54,99 @@ class CourseProvider extends ChangeNotifier {
 
     try {
       debugPrint('Fetching subjects for $courseSlug...');
-      // 1. Fetch from 'subjects' table
-      final subjectData = await _supabase
+
+      // 1. Fetch all unique subjects for this course from both tables
+      final subjectMeta = await _supabase
           .from('subjects')
           .select('*')
-          .eq('course_type', courseSlug);
+          .ilike('course_type', courseSlug);
 
-      // 2. Fetch from 'mcqs' table to find subjects that might not be in subjects table
-      final mcqData = await _supabase
+      final mcqMeta = await _supabase
           .from('mcqs')
-          .select('subject')
-          .eq('course_type', courseSlug);
+          .select('subject, chapter')
+          .ilike('course_type', courseSlug);
+
+      final chapterMeta = await _supabase
+          .from('chapters')
+          .select('subject, chapter_name')
+          .ilike('course_type', courseSlug);
+
+      final Map<String, Set<String>> subjectChapters = {};
+
+      // Process 'chapters' table
+      for (var c in chapterMeta as List) {
+        final sub = (c['subject'] as String).toLowerCase();
+        final chap = (c['chapter_name'] as String).toLowerCase();
+        subjectChapters.putIfAbsent(sub, () => {}).add(chap);
+      }
+
+      // Process 'mcqs' table
+      for (var m in mcqMeta as List) {
+        final sub = (m['subject'] as String).toLowerCase();
+        final chap = (m['chapter'] ?? 'Uncategorized').toString().toLowerCase();
+        subjectChapters.putIfAbsent(sub, () => {}).add(chap);
+      }
 
       final Set<String> uniqueSubjectNames = {};
       final List<Subject> subjects = [];
 
-      // Add from subjects table
-      for (var s in subjectData as List) {
+      // Add from subjects metadata table
+      for (var s in subjectMeta as List) {
         final name = s['subject_name'] as String;
-        if (!uniqueSubjectNames.contains(name.toLowerCase())) {
-          uniqueSubjectNames.add(name.toLowerCase());
-
-          final chapterCount =
-              await _getChapterCountForSubject(courseSlug, name);
+        final nameLower = name.toLowerCase();
+        if (!uniqueSubjectNames.contains(nameLower)) {
+          uniqueSubjectNames.add(nameLower);
 
           subjects.add(Subject(
             id: s['id'].toString(),
             title: name,
             icon: _getIconForSubject(name),
-            chapterCount: chapterCount,
+            chapterCount: subjectChapters[nameLower]?.length ?? 0,
           ));
         }
       }
 
-      // Add remaining from mcqs table
-      for (var m in mcqData as List) {
-        final name = m['subject'] as String;
-        if (!uniqueSubjectNames.contains(name.toLowerCase())) {
-          uniqueSubjectNames.add(name.toLowerCase());
+      // Add remaining subjects found only in MCQs/Chapters
+      subjectChapters.forEach((subNameLower, chapters) {
+        if (!uniqueSubjectNames.contains(subNameLower)) {
+          uniqueSubjectNames.add(subNameLower);
 
-          final chapterCount =
-              await _getChapterCountForSubject(courseSlug, name);
+          // Try to capitalize first letter
+          final displayTitle = subNameLower
+              .split(' ')
+              .map((word) => word.isNotEmpty
+                  ? '${word[0].toUpperCase()}${word.substring(1)}'
+                  : '')
+              .join(' ');
 
           subjects.add(Subject(
-            id: name,
-            title: name,
-            icon: _getIconForSubject(name),
-            chapterCount: chapterCount,
+            id: subNameLower,
+            title: displayTitle,
+            icon: _getIconForSubject(subNameLower),
+            chapterCount: chapters.length,
           ));
         }
-      }
+      });
 
       _courseSubjects[courseSlug] = subjects;
       notifyListeners();
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('Error fetching subjects for $courseSlug: $e');
+      debugPrint(stack.toString());
     }
   }
 
-  Future<int> _getChapterCountForSubject(
-      String courseSlug, String subjectName) async {
-    try {
-      final res1 = await _supabase
-          .from('chapters')
-          .select('chapter_name')
-          .ilike('course_type', courseSlug)
-          .ilike('subject', subjectName);
-      final res2 = await _supabase
-          .from('mcqs')
-          .select('chapter')
-          .ilike('course_type', courseSlug)
-          .ilike('subject', subjectName);
+  // Remove the old inefficient helper
 
-      final Set<String> chapters = {};
-      for (var r in res1)
-        chapters.add((r['chapter_name'] as String).toLowerCase());
-      for (var r in res2) {
-        if (r['chapter'] != null)
-          chapters.add((r['chapter'] as String).toLowerCase());
-      }
+  Map<String, List<Chapter>> _subjectChaptersList = {};
 
-      return chapters.length;
-    } catch (e) {
-      return 0;
-    }
-  }
+  List<Chapter> getChaptersListForSubject(String courseSlug, String subject) =>
+      _subjectChaptersList['${courseSlug}_$subject'] ?? [];
 
   Future<void> fetchChaptersForSubject(
       String courseSlug, String subject) async {
     final cacheKey = '${courseSlug}_$subject';
-    if (_subjectChapters.containsKey(cacheKey)) return;
+    if (_subjectChaptersList.containsKey(cacheKey)) return;
 
     try {
       debugPrint('Fetching chapters for $courseSlug - $subject...');
@@ -151,43 +154,76 @@ class CourseProvider extends ChangeNotifier {
       // 1. Fetch from 'chapters' table
       final chapterData = await _supabase
           .from('chapters')
-          .select('chapter_name')
+          .select('*')
           .ilike('course_type', courseSlug)
           .ilike('subject', subject);
 
-      // 2. Fetch from 'mcqs' table
+      // 2. Fetch from 'mcqs' table (fallback for chapters not in chapters table)
       final mcqData = await _supabase
           .from('mcqs')
           .select('chapter')
           .ilike('course_type', courseSlug)
           .ilike('subject', subject);
 
-      final Set<String> uniqueChapters = {};
-      final List<String> chapters = [];
+      final Map<String, Chapter> chapterMap = {};
 
       // Add from chapters table
       for (var c in chapterData as List) {
         final name = c['chapter_name'] as String;
-        if (!uniqueChapters.contains(name.toLowerCase())) {
-          uniqueChapters.add(name.toLowerCase());
-          chapters.add(name);
-        }
+        final desc =
+            c['description'] ?? _generateChapterDescription(name, subject);
+
+        chapterMap[name.toLowerCase()] = Chapter(
+          id: c['id'].toString(),
+          title: name,
+          description: desc,
+          duration: c['duration'] ?? '15-20 mins',
+          videoUrl: c['video_url'],
+          isLocked: c['is_locked'] ?? false,
+        );
       }
 
-      // Add from mcqs table
+      // Add from mcqs table if not already present
       for (var m in mcqData as List) {
         final name = (m['chapter'] ?? 'Uncategorized') as String;
-        if (!uniqueChapters.contains(name.toLowerCase())) {
-          uniqueChapters.add(name.toLowerCase());
-          chapters.add(name);
+        if (!chapterMap.containsKey(name.toLowerCase())) {
+          chapterMap[name.toLowerCase()] = Chapter(
+            id: name,
+            title: name,
+            description: _generateChapterDescription(name, subject),
+            duration: '10-15 mins',
+          );
         }
       }
 
-      _subjectChapters[cacheKey] = chapters..sort();
+      final List<Chapter> chapters = chapterMap.values.toList()
+        ..sort((a, b) => a.title.compareTo(b.title));
+
+      _subjectChaptersList[cacheKey] = chapters;
+      _subjectChapters[cacheKey] = chapters
+          .map((c) => c.title)
+          .toList(); // Keep old cache for compatibility
       notifyListeners();
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('Error fetching chapters: $e');
+      debugPrint(stack.toString());
     }
+  }
+
+  double getSubjectProgress(
+      String courseSlug, String subjectTitle, List<String> completedEntries) {
+    final chapters = getChaptersListForSubject(courseSlug, subjectTitle);
+    if (chapters.isEmpty) return 0.0;
+
+    int completedCount = 0;
+    for (var chapter in chapters) {
+      final entry = '${courseSlug}_${chapter.id}';
+      if (completedEntries.contains(entry)) {
+        completedCount++;
+      }
+    }
+
+    return completedCount / chapters.length;
   }
 
   String _getIconForSubject(String name) {
@@ -197,83 +233,91 @@ class CourseProvider extends ChangeNotifier {
     if (n.contains('urdu')) return '✍️';
     if (n.contains('physics')) return '⚡';
     if (n.contains('chemistry')) return '🧪';
-    if (n.contains('biology')) return '🧬';
-    if (n.contains('gk') || n.contains('general')) return '🌍';
+    if (n.contains('biol')) return '🧬';
+    if (n.contains('gk') || n.contains('general knowledge')) return '🌍';
     if (n.contains('islam')) return '☪️';
+    if (n.contains('intelligence')) return '🧠';
+    if (n.contains('verbal')) return '🗣️';
+    if (n.contains('non-verbal')) return '🧩';
+    if (n.contains('pakistan study')) return '🇵🇰';
+    if (n.contains('computer')) return '💻';
     return '📖';
   }
 
-  final List<Course> _mockCourses = [
-    Course(
-      id: '6',
-      title: 'Class 6 Preparation',
-      slug: 'class-6',
-      description:
-          'Comprehensive learning materials for 6th grade students covering all core subjects.',
-      imageUrl: 'assets/images/class-6.png',
-      category: 'Academics',
-      subjectCount: 7,
-      videoCount: 85,
-      students: 3200,
-    ),
-    Course(
-      id: '1',
-      title: '9th Class Preparation',
-      slug: 'class-9',
-      description:
-          'Complete syllabus coverage for 9th class students with expert guidance and mock tests.',
-      imageUrl: 'assets/images/class-9.png',
-      category: 'Academics',
-      subjectCount: 8,
-      videoCount: 120,
-      students: 5400,
-    ),
-    Course(
-      id: 'afns',
-      title: 'AFNS Nursing Prep',
-      slug: 'afns-prep',
-      description: 'Prepare for Armed Forces Nursing Service exams.',
-      imageUrl: 'assets/images/afns-prep.png',
-      category: 'Entrance',
-      subjectCount: 5,
-      videoCount: 60,
-      students: 1500,
-    ),
-    Course(
-      id: '2',
-      title: 'PAF Cadet College Prep',
-      slug: 'paf-cadet',
-      description:
-          'Prepare for PAF Cadet College admission with strategic guidance.',
-      imageUrl: 'assets/images/paf-prep.png',
-      category: 'Entrance',
-      subjectCount: 6,
-      videoCount: 95,
-      students: 2100,
-    ),
-    Course(
-      id: '3',
-      title: 'English Grammar Masterclass',
-      slug: 'english-grammar',
-      description: 'Master English grammar for all competitive examinations.',
-      imageUrl:
-          'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=600',
-      category: 'Languages',
-      subjectCount: 4,
-      videoCount: 50,
-      students: 4200,
-    ),
-  ];
+  String _generateChapterDescription(String chapter, String subject) {
+    final c = chapter.toLowerCase();
+    final s = subject.toLowerCase();
 
-  List<Course> getBySearch(String query) {
-    if (query.isEmpty) return _courses;
-    return _courses
-        .where((c) => c.title.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+    if (c.contains('intro'))
+      return 'Comprehensive introduction to the core concepts of $subject.';
+    if (c.contains('advance'))
+      return 'In-depth exploration of advanced topics and complex problem-solving in $subject.';
+    if (c.contains('test') || c.contains('quiz'))
+      return 'Strategic preparation and practice session for excelling in $subject exams.';
+    if (c.contains('exercise'))
+      return 'Practical exercises and real-world applications of the theories learned in $subject.';
+
+    // Fallback based on subject
+    if (s.contains('bio'))
+      return 'Deep dive into life sciences, covering the biological mechanisms of $chapter.';
+    if (s.contains('physic'))
+      return 'Understanding the laws of nature and physical phenomena through the lens of $chapter.';
+    if (s.contains('math'))
+      return 'Mastering mathematical precision and logical reasoning focused on $chapter.';
+    if (s.contains('english'))
+      return 'Enhancing linguistics, grammar, and literary analysis specific to $chapter.';
+    if (s.contains('intelligence'))
+      return 'Analytical skill development and cognitive training exercises focused on $chapter patterns.';
+
+    return 'Explore the essential principles of $chapter within the context of the $subject curriculum.';
   }
 
-  List<Course> getByCategory(String category) {
-    if (category == 'All') return _courses;
-    return _courses.where((c) => c.category == category).toList();
+  List<Course> getBySearch(String query) {
+    if (query.trim().isEmpty) return _courses;
+    final q = query.toLowerCase().trim();
+
+    return _courses.where((c) {
+      return c.title.toLowerCase().contains(q) ||
+          c.description.toLowerCase().contains(q) ||
+          c.category.toLowerCase().contains(q) ||
+          c.slug.toLowerCase().contains(q);
+    }).toList();
+  }
+
+  List<Course> searchCourses({String? category, String? query}) {
+    List<Course> results = _courses;
+
+    if (category != null && category != 'All') {
+      results = results.where((c) => c.category == category).toList();
+    }
+
+    if (query != null && query.trim().isNotEmpty) {
+      final q = query.toLowerCase().trim();
+      results = results.where((c) {
+        return c.title.toLowerCase().contains(q) ||
+            c.description.toLowerCase().contains(q) ||
+            c.slug.toLowerCase().contains(q);
+      }).toList();
+    }
+
+    return results;
+  }
+
+  List<Course> getRecommendations(String? targetCourse) {
+    if (targetCourse == null || targetCourse == 'All') {
+      return featuredCourses;
+    }
+
+    // Sort courses: target course first, then featured, then others
+    final recs = List<Course>.from(_courses);
+    recs.sort((a, b) {
+      if (a.slug == targetCourse) return -1;
+      if (b.slug == targetCourse) return 1;
+      if (a.category == 'Entrance') return -1;
+      if (b.category == 'Entrance') return 1;
+      return 0;
+    });
+
+    return recs.take(6).toList();
   }
 }

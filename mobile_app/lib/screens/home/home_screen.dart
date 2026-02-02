@@ -7,7 +7,10 @@ import 'package:passion_academia/screens/quiz/tests_screen.dart';
 import 'package:passion_academia/widgets/course_card.dart';
 import 'package:passion_academia/widgets/common/app_header.dart';
 import 'package:passion_academia/widgets/common/stat_card.dart';
+import 'package:passion_academia/core/providers/auth_provider.dart';
 import 'package:passion_academia/core/providers/course_provider.dart';
+import 'package:passion_academia/widgets/home/xp_progress_bar.dart';
+import 'package:passion_academia/widgets/home/social_activity_feed.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,17 +21,45 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _buildPage(),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
           setState(() {
             _selectedIndex = index;
           });
+        },
+        children: [
+          _buildHome(),
+          const CoursesScreen(),
+          const TestsScreen(),
+          const ProfileScreen(),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
         },
         selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Theme.of(context).brightness == Brightness.dark
@@ -46,28 +77,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPage() {
-    switch (_selectedIndex) {
-      case 0:
-        return _buildHome();
-      case 1:
-        return const CoursesScreen();
-      case 2:
-        return const TestsScreen();
-      case 3:
-        return const ProfileScreen();
-      default:
-        return _buildHome();
-    }
-  }
-
   Widget _buildHome() {
     final courseProvider = context.watch<CourseProvider>();
+    final authProvider = context.watch<AuthProvider>();
     final featuredCourses = courseProvider.featuredCourses;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: const AppHeader(transparent: true),
+      appBar: AppHeader(
+        transparent: true,
+        onSearch: () => _pageController.animateToPage(1,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut),
+      ),
       body: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
@@ -76,27 +98,14 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // Replicate Web Gradient Orbs
             Positioned(
-              top: -50,
-              left: -50,
-              child: Container(
-                width: 250,
-                height: 250,
-                decoration: BoxDecoration(
-                  color:
-                      Theme.of(context).colorScheme.primary.withOpacity(0.08),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 200,
+              top: -100,
               right: -50,
               child: Container(
-                width: 250,
-                height: 250,
+                width: 300,
+                height: 300,
                 decoration: BoxDecoration(
                   color:
-                      Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                      Theme.of(context).colorScheme.primary.withOpacity(0.12),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -105,14 +114,54 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: kToolbarHeight + 40),
-                  // Hero Section
+                  const SizedBox(height: kToolbarHeight + 32),
+                  // Welcome & XP Progress
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Hello, ${authProvider.userName?.split(' ')[0]}! 👋',
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                        const SizedBox(height: 12),
+                        XPProgressBar(
+                          level: authProvider.userLevel,
+                          currentXP: authProvider.userXP,
+                          nextLevelXP: authProvider.xpForNextLevel,
+                          progress: authProvider.levelProgress,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // AI Recommendations
+                  _buildRecommendations(context, courseProvider, authProvider),
+
+                  const SizedBox(height: 32),
+
+                  // Social Activity Feed
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.0),
+                    child: SocialActivityFeed(),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Hero Section (Discovery Title)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         RichText(
+// ...
                           text: TextSpan(
                             style: Theme.of(context)
                                 .textTheme
@@ -239,7 +288,42 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 48),
+
+                  // Discover Topics (Search & Discovery)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Discover Topics',
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _buildTopicChip(context, 'AFNS',
+                                Icons.medical_services_outlined),
+                            _buildTopicChip(
+                                context, 'PAF', Icons.airplanemode_active),
+                            _buildTopicChip(context, 'Biology', Icons.biotech),
+                            _buildTopicChip(context, 'Physics', Icons.bolt),
+                            _buildTopicChip(
+                                context, 'English', Icons.translate),
+                            _buildTopicChip(context, 'Math', Icons.calculate),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 48),
 
                   // Stats section (Reusable StatCard usage)
                   Padding(
@@ -362,6 +446,47 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildTopicChip(BuildContext context, String label, IconData icon) {
+    return GestureDetector(
+      onTap: () {
+        // For now, just navigate to Courses tab
+        _pageController.animateToPage(
+          1,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTestimonialCard(String name, String role, String quote) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -412,6 +537,111 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  String _getIconForCourse(String slug) {
+    if (slug.contains('afns')) return '🎖️';
+    if (slug.contains('paf')) return '✈️';
+    if (slug.contains('mcj')) return '⚖️';
+    if (slug.contains('mcm')) return '🏥';
+    return '📚';
+  }
+
+  Widget _buildRecommendations(
+      BuildContext context, CourseProvider provider, AuthProvider auth) {
+    final recommended = provider.getRecommendations(auth.userProfile?.course);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Row(
+            children: [
+              const Icon(Icons.auto_awesome, color: Colors.amber, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'AI Tailored for You',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 160,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: recommended.length,
+            itemBuilder: (context, index) {
+              final course = recommended[index];
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (c) => CourseDetailScreen(course: course),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 140,
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16)),
+                        child: Container(
+                          height: 80,
+                          width: double.infinity,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.1),
+                          child: Center(
+                            child: Text(
+                              _getIconForCourse(course.slug),
+                              style: const TextStyle(fontSize: 32),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          course.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

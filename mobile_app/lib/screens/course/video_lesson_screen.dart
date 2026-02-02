@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:passion_academia/models/course.dart';
 import 'package:passion_academia/core/services/youtube_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
+import 'package:passion_academia/core/providers/auth_provider.dart';
+import 'package:passion_academia/screens/quiz/quiz_screen.dart';
 
 class VideoLessonScreen extends StatefulWidget {
   final Course course;
   final Chapter initialChapter;
+  final List<Chapter>? chapters;
 
   const VideoLessonScreen({
     super.key,
     required this.course,
     required this.initialChapter,
+    this.chapters,
   });
 
   @override
@@ -22,42 +27,83 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
   List<Map<String, dynamic>> _suggestedVideos = [];
   bool _isLoadingVideos = false;
   Map<String, dynamic>? _currentPlayingVideo;
-
-  final List<Chapter> _chapters = [
-    const Chapter(
-        id: '1', title: 'Introduction to the Course', isCompleted: true),
-    const Chapter(id: '2', title: 'Fundamental Concepts', isCompleted: true),
-    const Chapter(id: '3', title: 'Detailed Analysis & Examples'),
-    const Chapter(id: '4', title: 'Advanced Problem Solving', isLocked: true),
-    const Chapter(id: '5', title: 'Practical Applications', isLocked: true),
-    const Chapter(id: '6', title: 'Final Review & Summary', isLocked: true),
-  ];
+  late List<Chapter> _chapters;
 
   @override
   void initState() {
     super.initState();
     _activeChapter = widget.initialChapter;
+    _chapters = widget.chapters ?? [];
     _fetchVideos();
   }
 
   Future<void> _fetchVideos() async {
+    if (!mounted) return;
     setState(() {
       _isLoadingVideos = true;
       _suggestedVideos = [];
       _currentPlayingVideo = null;
     });
 
-    final query = '${widget.course.title} ${_activeChapter.title}';
-    final videos = await YoutubeService.searchVideos(query);
-
-    if (mounted) {
-      setState(() {
-        _suggestedVideos = videos;
-        if (videos.isNotEmpty) {
-          _currentPlayingVideo = videos.first;
+    // 1. Check if chapter has a direct video URL (primary source)
+    if (_activeChapter.videoUrl != null &&
+        _activeChapter.videoUrl!.isNotEmpty) {
+      final videoUrl = _activeChapter.videoUrl!;
+      if (videoUrl.contains('youtube.com') || videoUrl.contains('youtu.be')) {
+        String? videoId;
+        if (videoUrl.contains('v=')) {
+          videoId = videoUrl.split('v=').last.split('&').first;
+        } else if (videoUrl.contains('youtu.be/')) {
+          videoId = videoUrl.split('youtu.be/').last.split('?').first;
         }
-        _isLoadingVideos = false;
+
+        if (videoId != null) {
+          _currentPlayingVideo = {
+            'videoId': videoId,
+            'title': _activeChapter.title,
+            'thumbnail':
+                'https://img.youtube.com/vi/$videoId/maxresdefault.jpg',
+          };
+        }
+      }
+    }
+
+    // 2. Fallback: Search YouTube if no direct URL or to provide recommendations
+    try {
+      final query =
+          '${widget.course.title} ${_activeChapter.title} lecture passion academia';
+      final videos = await YoutubeService.searchVideos(query);
+
+      if (mounted) {
+        setState(() {
+          _suggestedVideos = videos;
+          // If no primary video was found, use the first YouTube search result
+          if (_currentPlayingVideo == null && videos.isNotEmpty) {
+            _currentPlayingVideo = videos.first;
+          }
+          _isLoadingVideos = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching lesson videos: $e');
+      if (mounted) {
+        setState(() => _isLoadingVideos = false);
+      }
+    }
+  }
+
+  void _goToNextChapter() {
+    final currentIndex = _chapters.indexWhere((c) => c.id == _activeChapter.id);
+    if (currentIndex != -1 && currentIndex < _chapters.length - 1) {
+      setState(() {
+        _activeChapter = _chapters[currentIndex + 1];
+        _fetchVideos();
       });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('You have reached the end of this subject!')),
+      );
     }
   }
 
@@ -74,7 +120,6 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Video Player Area
             AspectRatio(
               aspectRatio: 16 / 9,
               child: Stack(
@@ -140,12 +185,9 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
                 ],
               ),
             ),
-
-            // Tabs / Recommendations
             Expanded(
               child: ListView(
                 children: [
-                  // Lesson Info
                   Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(
@@ -168,22 +210,86 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
                         const SizedBox(height: 20),
                         Row(
                           children: [
-                            _buildInfoChip(
-                                Icons.video_library_outlined, '12 mins'),
+                            _buildInfoChip(Icons.video_library_outlined,
+                                _activeChapter.duration ?? '12 mins'),
                             const SizedBox(width: 12),
                             _buildInfoChip(
                                 Icons.description_outlined, 'Materials'),
                             const SizedBox(width: 12),
-                            _buildInfoChip(Icons.quiz_outlined, 'Quiz'),
+                            GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => QuizScreen(
+                                        subjectTitle: _activeChapter.title,
+                                        courseSlug: widget.course.slug,
+                                        chapterTitle: _activeChapter.title,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: _buildInfoChip(
+                                    Icons.quiz_outlined, 'Quiz')),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _activeChapter.description ??
+                              'Learn the fundamentals of ${_activeChapter.title} in this detailed video lesson. We cover all key concepts required for your exams.',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withOpacity(0.8),
+                                    height: 1.5,
+                                  ),
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () async {
+                                  final auth = context.read<AuthProvider>();
+                                  await auth.markChapterCompleted(
+                                      widget.course.slug, _activeChapter.id);
+
+                                  // Award XP for completion
+                                  await auth.updateStats(20, false);
+
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Lesson completed! +20 XP awarded 🚀')));
+                                    _goToNextChapter();
+                                  }
+                                },
+                                icon: const Icon(Icons.check_circle_outline),
+                                label: const Text('Complete Lesson'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            IconButton.filledTonal(
+                              onPressed: _goToNextChapter,
+                              icon: const Icon(Icons.skip_next),
+                              tooltip: 'Next Lesson',
+                            ),
                           ],
                         ),
                       ],
                     ),
                   ),
-
                   const Divider(),
-
-                  // YouTube Suggestions
                   if (_isLoadingVideos)
                     const Center(child: LinearProgressIndicator())
                   else if (_suggestedVideos.isNotEmpty) ...[
@@ -273,12 +379,10 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
                     ),
                     const Divider(),
                   ],
-
-                  // Course Content List
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20.0, vertical: 12.0),
-                    child: Text('Course Content',
+                    child: const Text('Course Content',
                         style: TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
@@ -298,7 +402,7 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
                                 setState(() {
                                   _activeChapter = chapter;
                                 });
-                                _fetchVideos(); // Refresh suggestions
+                                _fetchVideos();
                               },
                         leading: Container(
                           width: 40,

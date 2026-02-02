@@ -10,6 +10,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:passion_academia/core/providers/quiz_provider.dart';
 import 'package:passion_academia/core/providers/admin_provider.dart';
 
+import 'package:passion_academia/core/providers/leaderboard_provider.dart';
+import 'package:passion_academia/core/providers/notification_provider.dart';
+import 'package:passion_academia/screens/home/home_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -26,6 +30,8 @@ void main() async {
         ChangeNotifierProvider(create: (_) => CourseProvider()),
         ChangeNotifierProvider(create: (_) => QuizProvider()),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
+        ChangeNotifierProvider(create: (_) => LeaderboardProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: const PassionAcademiaApp(),
     ),
@@ -37,13 +43,15 @@ class PassionAcademiaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
     return MaterialApp(
       title: 'Passion Academia',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: const WelcomeScreen(),
+      home: auth.isAuthenticated ? const HomeScreen() : const WelcomeScreen(),
     );
   }
 }

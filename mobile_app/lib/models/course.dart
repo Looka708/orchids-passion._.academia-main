@@ -83,6 +83,8 @@ class Subject {
 class Chapter {
   final String id;
   final String title;
+  final String? description;
+  final String? duration;
   final String? videoUrl;
   final bool isLocked;
   final bool isCompleted;
@@ -90,6 +92,8 @@ class Chapter {
   const Chapter({
     required this.id,
     required this.title,
+    this.description,
+    this.duration,
     this.videoUrl,
     this.isLocked = false,
     this.isCompleted = false,

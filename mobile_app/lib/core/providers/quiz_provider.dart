@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:passion_academia/models/course.dart';
+import 'package:passion_academia/core/services/firebase_service.dart';
 
 class QuizProvider extends ChangeNotifier {
   final _supabase = Supabase.instance.client;
@@ -184,9 +185,39 @@ class QuizProvider extends ChangeNotifier {
     required int score,
     required int totalQuestions,
     required int correctAnswers,
+    String? idToken,
   }) async {
-    // Here you would normally update progress in Firebase/Supabase
-    // For now, let's just log it
-    debugPrint('Submitting result: $score% for $userId in $subject');
+    try {
+      debugPrint('Submitting result: $score% for $userId in $subject');
+
+      // 1. Save to Supabase 'results' table
+      await _supabase.from('results').insert({
+        'user_id': userId,
+        'course_slug': courseSlug,
+        'subject': subject,
+        'score': score,
+        'total_questions': totalQuestions,
+        'correct_answers': correctAnswers,
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      });
+
+      // 2. Log to Firestore 'activities' (for web compatibility)
+      await FirebaseService.logActivity(
+        userId,
+        'quiz',
+        correctAnswers * 10,
+        {
+          'subject': subject,
+          'score': score,
+          'questionsAnswered': totalQuestions,
+          'correctAnswers': correctAnswers,
+        },
+        idToken,
+      );
+
+      debugPrint('Results stored in Supabase and Firestore');
+    } catch (e) {
+      debugPrint('Error submitting result: $e');
+    }
   }
 }

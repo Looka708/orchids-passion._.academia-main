@@ -122,6 +122,9 @@ class _QuizScreenState extends State<QuizScreen> {
 
     final auth = context.read<AuthProvider>();
     if (auth.isAuthenticated) {
+      final xpEarned = correct * 10;
+      final bool updateStreak = finalScore >= 60;
+
       context.read<QuizProvider>().submitResult(
             userId: auth.userProfile!.id,
             courseSlug: widget.courseSlug,
@@ -129,7 +132,15 @@ class _QuizScreenState extends State<QuizScreen> {
             score: finalScore,
             totalQuestions: questions.length,
             correctAnswers: correct,
+            idToken: auth.token,
           );
+
+      auth.updateStats(
+        xpEarned,
+        updateStreak,
+        questionsCount: questions.length,
+        correctCount: correct,
+      );
     }
   }
 

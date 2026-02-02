@@ -8,8 +8,9 @@ class SupabaseService {
   static Future<String?> uploadProfilePicture(
       Uint8List bytes, String userId) async {
     try {
-      final fileName = '$userId-${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final path = 'profile_pics/$fileName';
+      // Use just the userId as filename to avoid clutter, or add timestamp for cache busting
+      final fileName = '${userId.replaceAll('@', '_')}_profile.jpg';
+      final path = fileName; // Upload to root of the bucket
 
       // 1. Upload the file
       await _client.storage.from('profile_pics').uploadBinary(
@@ -21,7 +22,9 @@ class SupabaseService {
 
       // 2. Get the public URL
       final publicUrl = _client.storage.from('profile_pics').getPublicUrl(path);
-      return publicUrl;
+
+      // Add timestamp for cache busting if needed, or just return publicUrl
+      return '$publicUrl?t=${DateTime.now().millisecondsSinceEpoch}';
     } catch (e) {
       print('Supabase Storage Error: $e');
       return null;

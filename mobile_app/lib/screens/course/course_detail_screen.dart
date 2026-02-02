@@ -4,8 +4,8 @@ import 'package:passion_academia/models/course.dart';
 import 'package:passion_academia/core/providers/course_provider.dart';
 import 'package:passion_academia/widgets/infinity_loader.dart';
 import 'package:passion_academia/screens/course/chapters_screen.dart';
-import 'package:passion_academia/screens/course/video_lesson_screen.dart';
 import 'package:passion_academia/widgets/subject_card.dart';
+import 'package:passion_academia/core/providers/auth_provider.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
@@ -65,17 +65,23 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => VideoLessonScreen(
-                                  course: widget.course,
-                                  initialChapter: const Chapter(
-                                      id: '1',
-                                      title: 'Introduction to the Course'),
+                            if (subjects.isNotEmpty) {
+                              // Navigate to Chapters view of the first subject
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChaptersScreen(
+                                    courseSlug: widget.course.slug,
+                                    subjectTitle: subjects.first.title,
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Curriculum is loading...')),
+                              );
+                            }
                           },
                           icon: const Icon(Icons.play_circle_fill, size: 20),
                           label: const Text('Watch Lessons'),
@@ -154,9 +160,23 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                               itemCount: subjects.length,
                               itemBuilder: (context, index) {
                                 final subject = subjects[index];
+                                final auth = context.watch<AuthProvider>();
+
+                                // Trigger background fetch for chapters to calculate progress accurately
+                                // fetchChaptersForSubject is already optimized with a cache check
+                                courseProvider.fetchChaptersForSubject(
+                                    widget.course.slug, subject.title);
+
+                                final progress =
+                                    courseProvider.getSubjectProgress(
+                                  widget.course.slug,
+                                  subject.title,
+                                  auth.completedChapters,
+                                );
+
                                 return SubjectCard(
                                   subject: subject,
-                                  progress: 0.0,
+                                  progress: progress,
                                   onTap: () {
                                     Navigator.push(
                                       context,

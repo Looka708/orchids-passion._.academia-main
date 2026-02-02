@@ -12,7 +12,14 @@ class AdminProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get users => _users;
   String? get error => _error;
 
-  Future<void> fetchUsers() async {
+  DateTime? _lastFetch;
+
+  Future<void> fetchUsers({bool force = false}) async {
+    if (!force &&
+        _lastFetch != null &&
+        DateTime.now().difference(_lastFetch!).inMinutes < 5) {
+      return;
+    }
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -29,10 +36,11 @@ class AdminProvider extends ChangeNotifier {
           'full_name': u['name'] ?? u['full_name'], // handle both cases
           'role': u['role'],
           'active': u['active'] ?? true,
-          'photo_url': u['photoUrl'], // camelCase in Firestore
+          'photo_url': u['photoURL'] ?? u['photoUrl'], // handle both cases
           'xp': u['xp'],
         };
       }).toList();
+      _lastFetch = DateTime.now();
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -71,6 +79,7 @@ class AdminProvider extends ChangeNotifier {
       }
       return false;
     } catch (e) {
+      debugPrint('Error toggling user status: $e');
       return false;
     }
   }
@@ -102,6 +111,7 @@ class AdminProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
+      debugPrint('Error adding MCQ: $e');
       return false;
     }
   }
@@ -112,6 +122,7 @@ class AdminProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
+      debugPrint('Error deleting MCQ: $e');
       return false;
     }
   }
@@ -123,6 +134,7 @@ class AdminProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
+      debugPrint('Error adding course: $e');
       return false;
     }
   }
@@ -133,6 +145,7 @@ class AdminProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
+      debugPrint('Error deleting course: $e');
       return false;
     }
   }

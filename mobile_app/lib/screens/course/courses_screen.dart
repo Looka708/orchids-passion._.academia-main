@@ -6,7 +6,8 @@ import 'package:passion_academia/screens/course/course_detail_screen.dart';
 import 'package:passion_academia/widgets/common/app_header.dart';
 
 class CoursesScreen extends StatefulWidget {
-  const CoursesScreen({super.key});
+  final bool autoFocusSearch;
+  const CoursesScreen({super.key, this.autoFocusSearch = false});
 
   @override
   State<CoursesScreen> createState() => _CoursesScreenState();
@@ -15,26 +16,39 @@ class CoursesScreen extends StatefulWidget {
 class _CoursesScreenState extends State<CoursesScreen> {
   String _selectedCategory = 'All';
   final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
 
-  final List<String> _categories = [
-    'All',
-    'Academics',
-    'Entrance',
-    'Nursing',
-    'Languages',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoFocusSearch) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _searchFocusNode.requestFocus();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final courseProvider = context.watch<CourseProvider>();
-    final courses = _selectedCategory == 'All'
-        ? courseProvider.getBySearch(_searchController.text)
-        : courseProvider
-            .getByCategory(_selectedCategory)
-            .where((c) => c.title
-                .toLowerCase()
-                .contains(_searchController.text.toLowerCase()))
-            .toList();
+
+    // Dynamically build categories from loaded courses
+    final List<String> categories = ['All'];
+    final uniqueCats =
+        courseProvider.courses.map((c) => c.category).toSet().toList();
+    categories.addAll(uniqueCats);
+
+    final courses = courseProvider.searchCourses(
+      category: _selectedCategory,
+      query: _searchController.text,
+    );
 
     return Scaffold(
       appBar: const AppHeader(title: 'All Programs', showProfile: false),
@@ -44,6 +58,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _searchController,
+              focusNode: _searchFocusNode,
               onChanged: (value) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'Search for courses...',
@@ -69,9 +84,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _categories.length,
+              itemCount: categories.length,
               itemBuilder: (context, index) {
-                final category = _categories[index];
+                final category = categories[index];
                 final isSelected = _selectedCategory == category;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
@@ -100,7 +115,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
           const SizedBox(height: 16),
           Expanded(
             child: courses.isEmpty
-                ? const Center(child: Text('No courses found'))
+                ? _buildNoResults()
                 : GridView.builder(
                     padding: const EdgeInsets.all(16),
                     gridDelegate:
@@ -126,6 +141,42 @@ class _CoursesScreenState extends State<CoursesScreen> {
                       );
                     },
                   ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoResults() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off_rounded,
+              size: 80, color: Colors.grey.withOpacity(0.5)),
+          const SizedBox(height: 16),
+          Text(
+            'No courses found',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Try adjusting your search or category filter',
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
+          TextButton.icon(
+            onPressed: () {
+              setState(() {
+                _searchController.clear();
+                _selectedCategory = 'All';
+              });
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('Clear all filters'),
           ),
         ],
       ),

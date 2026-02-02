@@ -38,7 +38,7 @@ class UserProfile {
       active: json['active'] ?? true,
       xp: json['xp'] ?? 0,
       streak: json['streak'] ?? 0,
-      photoUrl: json['photoUrl'],
+      photoUrl: json['photoURL'] ?? json['photoUrl'],
     );
   }
 
@@ -60,17 +60,25 @@ class AuthProvider extends ChangeNotifier {
   String? _token;
   bool _isLoading = false;
   String? _error;
+  List<String> _completedChapters = [];
 
   UserProfile? get user => _user;
   UserProfile? get userProfile => _user;
   String? get token => _token;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  List<String> get completedChapters => _completedChapters;
   bool get isAuthenticated => _user != null;
 
   String? get userName => _user?.name ?? _user?.email;
   int get userXP => _user?.xp ?? 0;
   int get userStreak => _user?.streak ?? 0;
+
+  // Gamification Logic
+  int get userLevel => (userXP / 500).floor() + 1;
+  int get xpForNextLevel => userLevel * 500;
+  int get xpInCurrentLevel => userXP % 500;
+  double get levelProgress => xpInCurrentLevel / 500;
 
   AuthProvider() {
     _loadUser();
@@ -83,6 +91,136 @@ class AuthProvider extends ChangeNotifier {
     if (userJson != null) {
       _user = UserProfile.fromJson(jsonDecode(userJson));
       notifyListeners();
+
+      try {
+        final freshData =
+            await FirebaseService.getUserFromFirestore(_user!.email, _token);
+        if (freshData != null) {
+          _user = UserProfile.fromJson(freshData);
+          await prefs.setString('user_profile', jsonEncode(_user!.toJson()));
+        }
+
+        // Fetch progress (completed chapters)
+        final progressData = await FirebaseService.getProgressFromFirestore(
+            _user!.email, _token);
+        if (progressData != null) {
+          final List<dynamic> completed =
+              progressData['completedChapters'] ?? [];
+          _completedChapters = completed.map((e) => e.toString()).toList();
+        }
+        notifyListeners();
+      } catch (e) {
+        debugPrint('Auto-refresh failed: $e');
+      }
+    }
+  }
+
+  Future<void> updateStats(int xpEarned, bool updateStreak,
+      {int? questionsCount, int? correctCount}) async {
+    if (_user == null) return;
+
+    // 1. Update User Document (Main stats)
+    final newXp = _user!.xp + xpEarned;
+    final Map<String, dynamic> updates = {'xp': newXp};
+
+    if (updateStreak) {
+      updates['streak'] = _user!.streak + 1;
+    }
+
+    final success = await FirebaseService.updateFirestoreField(
+        _user!.email, updates, _token);
+
+    // 2. Update Progress Subcollection (Web Compatibility)
+    try {
+      final currentProgress =
+          await FirebaseService.getProgressFromFirestore(_user!.email, _token);
+      if (currentProgress != null) {
+        final Map<String, dynamic> progressUpdates = {
+          'totalXP': (_user!.xp) + xpEarned,
+          'streak': updates.containsKey('streak')
+              ? updates['streak']
+              : (_user!.streak),
+          'lastActive': DateTime.now().toUtc().toIso8601String(),
+        };
+
+        if (questionsCount != null || correctCount != null) {
+          final stats = currentProgress['stats'] as Map<String, dynamic>? ?? {};
+          progressUpdates['stats'] = {
+            'questionsAnswered':
+                (stats['questionsAnswered'] ?? 0) + (questionsCount ?? 0),
+            'correctAnswers':
+                (stats['correctAnswers'] ?? 0) + (correctCount ?? 0),
+            'quizzesCompleted': (stats['quizzesCompleted'] ?? 0) + 1,
+          };
+        }
+
+        await FirebaseService.updateProgressInFirestore(
+            _user!.email, progressUpdates, _token);
+      }
+    } catch (e) {
+      debugPrint('Error updating progress subcollection: $e');
+    }
+
+    if (success) {
+      // Update local state
+      _user = UserProfile(
+        id: _user!.id,
+        name: _user!.name,
+        email: _user!.email,
+        course: _user!.course,
+        role: _user!.role,
+        photoUrl: _user!.photoUrl,
+        xp: newXp,
+        streak:
+            updates.containsKey('streak') ? updates['streak'] : _user!.streak,
+        active: _user!.active,
+      );
+
+      // Save to Local Storage
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_profile', jsonEncode(_user!.toJson()));
+      notifyListeners();
+    }
+  }
+
+  Future<void> markChapterCompleted(String courseSlug, String chapterId) async {
+    if (_user == null) return;
+
+    try {
+      final String entry = '${courseSlug}_$chapterId';
+      if (!_completedChapters.contains(entry)) {
+        _completedChapters.add(entry);
+        notifyListeners(); // Immediate UI update
+
+        final currentProgress = await FirebaseService.getProgressFromFirestore(
+            _user!.email, _token);
+
+        if (currentProgress != null) {
+          final List<dynamic> completed =
+              currentProgress['completedChapters'] ?? [];
+          if (!completed.contains(entry)) {
+            completed.add(entry);
+            final stats =
+                currentProgress['stats'] as Map<String, dynamic>? ?? {};
+
+            await FirebaseService.updateProgressInFirestore(
+                _user!.email,
+                {
+                  'completedChapters': completed,
+                  'stats': {
+                    ...stats,
+                    'chaptersCompleted': (stats['chaptersCompleted'] ?? 0) + 1,
+                  }
+                },
+                _token);
+          }
+        }
+
+        // Award some XP
+        await updateStats(20, false);
+      }
+    } catch (e) {
+      debugPrint('Error marking chapter completed: $e');
     }
   }
 
@@ -99,10 +237,12 @@ class AuthProvider extends ChangeNotifier {
 
       if (authData != null) {
         // Firebase Auth Success -> Get profile from Firestore
-        firestoreData = await FirebaseService.getUserFromFirestore(email);
+        _token = authData['idToken'];
+        firestoreData =
+            await FirebaseService.getUserFromFirestore(email, _token);
       } else {
         // 2. Firebase Auth Failed -> Check manual Firestore password (for Admin/Special accounts)
-        firestoreData = await FirebaseService.getUserFromFirestore(email);
+        firestoreData = await FirebaseService.getUserFromFirestore(email, null);
         if (firestoreData == null || firestoreData['password'] != password) {
           _error = 'Invalid email or password.';
           return false;
@@ -142,9 +282,55 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> signup(String name, String email, String password) async {
-    _error = 'Signup is currently only available through the web platform.';
+    _error = null;
+    _isLoading = true;
     notifyListeners();
-    return false;
+
+    try {
+      // 1. Sign up with Firebase Auth
+      final authData = await FirebaseService.signUpWithEmail(email, password);
+
+      if (authData != null) {
+        _token = authData['idToken'];
+        // 2. Create user document in Firestore
+        final success = await FirebaseService.createUserInFirestore(
+            name, email, password, _token);
+
+        if (success) {
+          // 3. Fetch the newly created profile
+          final firestoreData =
+              await FirebaseService.getUserFromFirestore(email, _token);
+
+          if (firestoreData != null) {
+            _user = UserProfile.fromJson(firestoreData);
+
+            // Save to Local Storage
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('user_profile', jsonEncode(_user!.toJson()));
+            if (_token != null) {
+              await prefs.setString('auth_token', _token!);
+            }
+
+            return true;
+          } else {
+            _error = 'Failed to retrieve user profile after signup.';
+            return false;
+          }
+        } else {
+          _error = 'Failed to create user profile in database.';
+          return false;
+        }
+      } else {
+        _error = 'Signup failed. Please try again.';
+        return false;
+      }
+    } catch (e) {
+      _error = 'An unexpected error occurred during signup: $e';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> logout() async {
@@ -168,13 +354,21 @@ class AuthProvider extends ChangeNotifier {
           await SupabaseService.uploadProfilePicture(imageBytes, _user!.id);
       if (photoUrl == null) return false;
 
-      // 2. Update Supabase Database
-      // We try to update both 'users' and 'user_profiles' if they exist, or just the one we're using
-      final success =
+      // 2. Update Supabase Database (Optional Sync)
+      // This is less critical than Firestore
+      final supabaseSuccess =
           await SupabaseService.updateProfileUrl(_user!.email, photoUrl);
+      if (!supabaseSuccess) {
+        debugPrint('Warning: Supabase profile table update failed.');
+      }
 
-      if (success) {
-        // 3. Update local state
+      // 3. Update Firestore (Primary Source of Truth)
+      // Matching web's key 'photoURL'
+      final firestoreSuccess = await FirebaseService.updateFirestoreField(
+          _user!.email, {'photoURL': photoUrl}, _token);
+
+      if (firestoreSuccess) {
+        // 4. Update local state
         _user = UserProfile(
           id: _user!.id,
           name: _user!.name,

@@ -7,8 +7,24 @@ import 'package:passion_academia/core/providers/course_provider.dart';
 import 'package:passion_academia/screens/course/course_detail_screen.dart';
 import 'package:passion_academia/screens/quiz/quiz_screen.dart';
 
-class TestsScreen extends StatelessWidget {
+import 'package:passion_academia/core/providers/auth_provider.dart';
+import 'package:passion_academia/core/providers/leaderboard_provider.dart';
+
+class TestsScreen extends StatefulWidget {
   const TestsScreen({super.key});
+
+  @override
+  State<TestsScreen> createState() => _TestsScreenState();
+}
+
+class _TestsScreenState extends State<TestsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      context.read<LeaderboardProvider>().fetchStreakLegends();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +34,8 @@ class TestsScreen extends StatelessWidget {
         .where((c) =>
             c.category == 'Entrance' || c.title.toLowerCase().contains('prep'))
         .toList();
+
+    final user = context.watch<AuthProvider>().userProfile;
 
     return Scaffold(
       appBar: const AppHeader(title: 'Mock Tests', showProfile: false),
@@ -31,8 +49,8 @@ class TestsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const StatCard(
-                    value: '12 Days',
+                  StatCard(
+                    value: '${user?.streak ?? 0} Days',
                     label: 'Current Streak 🔥',
                     icon: Icons.local_fire_department,
                     color: Colors.orange,
@@ -42,6 +60,7 @@ class TestsScreen extends StatelessWidget {
                 ],
               ),
             ),
+// ...
 
             // Daily Quiz Card
             Padding(
@@ -106,6 +125,9 @@ class TestsScreen extends StatelessWidget {
   }
 
   Widget _buildLeaderboardPreview(BuildContext context) {
+    final leaderboard = context.watch<LeaderboardProvider>();
+    final topUsers = leaderboard.topUsers;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -129,11 +151,33 @@ class TestsScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          _buildLeaderItem(context, '1', 'Ahmed Ali', '24 Days'),
-          const Divider(height: 12),
-          _buildLeaderItem(context, '2', 'Sara Khan', '21 Days'),
-          const Divider(height: 12),
-          _buildLeaderItem(context, '3', 'Zainab Q.', '19 Days'),
+          if (leaderboard.isLoading)
+            const Center(
+                child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2)),
+            ))
+          else if (topUsers.isEmpty)
+            const Text('No data yet',
+                style: TextStyle(fontSize: 12, color: Colors.grey))
+          else
+            ...topUsers.asMap().entries.map((entry) {
+              final index = entry.key;
+              final user = entry.value;
+              return Column(
+                children: [
+                  _buildLeaderItem(
+                      context,
+                      (index + 1).toString(),
+                      user['full_name'] ?? user['name'] ?? 'Anonymous',
+                      '${user['streak'] ?? 0} Days'),
+                  if (index < topUsers.length - 1) const Divider(height: 12),
+                ],
+              );
+            }).toList(),
         ],
       ),
     );
