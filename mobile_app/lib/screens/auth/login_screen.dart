@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:passion_academia/core/providers/auth_provider.dart';
 import 'package:passion_academia/widgets/common/custom_text_field.dart';
@@ -17,6 +18,24 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberedEmail();
+  }
+
+  Future<void> _loadRememberedEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('remembered_email');
+    if (email != null) {
+      setState(() {
+        _emailController.text = email;
+        _rememberMe = true;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,12 +87,32 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
               ),
             ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {},
-                child: const Text('Forgot Password?'),
-              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: Checkbox(
+                    value: _rememberMe,
+                    onChanged: (value) {
+                      setState(() {
+                        _rememberMe = value ?? false;
+                      });
+                    },
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text('Remember me'),
+                const Spacer(),
+                TextButton(
+                  onPressed: () {},
+                  child: const Text('Forgot Password?'),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -111,17 +150,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.apple, size: 20),
-                    label: const FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text('Apple'),
-                    ),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -143,15 +171,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     final authProvider = context.read<AuthProvider>();
+    final email = _emailController.text.trim();
 
     final success = await authProvider.login(
-      _emailController.text.trim(),
+      email,
       _passwordController.text,
     );
 
     if (!mounted) return;
 
     if (success) {
+      // Handle Remember Me
+      final prefs = await SharedPreferences.getInstance();
+      if (_rememberMe) {
+        await prefs.setString('remembered_email', email);
+      } else {
+        await prefs.remove('remembered_email');
+      }
+
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (c) => const HomeScreen()),
         (route) => false,

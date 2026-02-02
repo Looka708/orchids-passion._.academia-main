@@ -71,9 +71,15 @@ class FirebaseService {
     );
 
     try {
+      debugPrint('Uploading to: $url');
+      debugPrint('Bytes length: ${imageBytes.length}');
+
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'image/jpeg'},
+        headers: {
+          'Content-Type': 'image/jpeg',
+          'Content-Length': imageBytes.length.toString(),
+        },
         body: imageBytes,
       );
 
@@ -81,9 +87,13 @@ class FirebaseService {
         final data = jsonDecode(response.body);
         final downloadToken = data['downloadTokens'] ?? '';
         // Construct the public URL
-        return 'https://firebasestorage.googleapis.com/v0/b/$_storageBucket/o/$encodedName?alt=media&token=$downloadToken';
+        final downloadUrl =
+            'https://firebasestorage.googleapis.com/v0/b/$_storageBucket/o/$encodedName?alt=media&token=$downloadToken';
+        debugPrint('Upload success: $downloadUrl');
+        return downloadUrl;
       } else {
-        debugPrint('Storage Upload Error: ${response.body}');
+        debugPrint(
+            'Storage Upload Error (${response.statusCode}): ${response.body}');
         return null;
       }
     } catch (e) {

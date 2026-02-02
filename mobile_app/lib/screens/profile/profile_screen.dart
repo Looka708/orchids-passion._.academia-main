@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:passion_academia/core/providers/auth_provider.dart';
 import 'package:passion_academia/widgets/common/stat_card.dart';
 import 'package:passion_academia/screens/auth/welcome_screen.dart';
+import 'package:passion_academia/screens/profile/personal_info_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -192,7 +193,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // Profile Options
             _buildOptionGroup(context, 'Account', [
-              _buildOption(context, 'Personal Info', Icons.person_outline),
+              _buildOption(
+                context,
+                'Personal Info',
+                Icons.person_outline,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const PersonalInfoScreen()),
+                  );
+                },
+              ),
               _buildOption(
                   context, 'My Certificates', Icons.card_membership_outlined),
               _buildOption(context, 'Payment Methods', Icons.payment_outlined),
@@ -254,13 +266,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildOption(BuildContext context, String label, IconData icon) {
+  Widget _buildOption(BuildContext context, String label, IconData icon,
+      {VoidCallback? onTap}) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24),
       leading: Icon(icon, size: 22),
       title: Text(label),
       trailing: const Icon(Icons.chevron_right, size: 20),
-      onTap: () {},
+      onTap: onTap,
     );
   }
 }

@@ -23,6 +23,42 @@ class CourseCard extends StatelessWidget {
     return _buildStandard(context);
   }
 
+  Widget _buildImage(BuildContext context,
+      {double? width, double? height, BoxFit fit = BoxFit.cover}) {
+    final bool isAsset = course.imageUrl.startsWith('assets/');
+
+    if (isAsset) {
+      return Image.asset(
+        course.imageUrl,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) =>
+            _buildErrorImage(context, width, height),
+      );
+    }
+
+    return Image.network(
+      course.imageUrl,
+      width: width,
+      height: height,
+      fit: fit,
+      errorBuilder: (context, error, stackTrace) =>
+          _buildErrorImage(context, width, height),
+    );
+  }
+
+  Widget _buildErrorImage(BuildContext context, double? width, double? height) {
+    return Container(
+      width: width,
+      height: height,
+      color: Theme.of(context).colorScheme.secondary,
+      child: Icon(Icons.school,
+          size: (width != null && width < 100) ? 24 : 48,
+          color: Theme.of(context).colorScheme.primary),
+    );
+  }
+
   Widget _buildCompact(BuildContext context) {
     return Card(
       child: InkWell(
@@ -33,19 +69,7 @@ class CourseCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  course.imageUrl,
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    width: 80,
-                    height: 80,
-                    color: Theme.of(context).colorScheme.secondary,
-                    child: Icon(Icons.school,
-                        color: Theme.of(context).colorScheme.primary),
-                  ),
-                ),
+                child: _buildImage(context, width: 80, height: 80),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -89,15 +113,7 @@ class CourseCard extends StatelessWidget {
           children: [
             AspectRatio(
               aspectRatio: isFeatured ? 21 / 9 : 16 / 9,
-              child: Image.network(
-                course.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: Theme.of(context).colorScheme.secondary,
-                  child: Icon(Icons.school,
-                      size: 48, color: Theme.of(context).colorScheme.primary),
-                ),
-              ),
+              child: _buildImage(context),
             ),
             Padding(
               padding: const EdgeInsets.all(12.0),

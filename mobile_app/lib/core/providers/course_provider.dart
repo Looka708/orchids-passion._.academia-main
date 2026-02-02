@@ -42,13 +42,24 @@ class CourseProvider extends ChangeNotifier {
 
   final List<Course> _mockCourses = [
     Course(
+      id: '6',
+      title: 'Class 6 Preparation',
+      slug: 'class-6',
+      description:
+          'Comprehensive learning materials for 6th grade students covering all core subjects.',
+      imageUrl: 'assets/images/class-6.png',
+      category: 'Academics',
+      subjectCount: 7,
+      videoCount: 85,
+      students: 3200,
+    ),
+    Course(
       id: '1',
       title: '9th Class Preparation',
       slug: 'class-9',
       description:
           'Complete syllabus coverage for 9th class students with expert guidance and mock tests.',
-      imageUrl:
-          'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=600',
+      imageUrl: 'assets/images/class-9.png',
       category: 'Academics',
       subjectCount: 8,
       videoCount: 120,

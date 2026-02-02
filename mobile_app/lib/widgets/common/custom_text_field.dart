@@ -10,12 +10,15 @@ class CustomTextField extends StatelessWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
 
+  final bool readOnly;
+
   const CustomTextField({
     super.key,
     required this.label,
     this.hint,
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
+    this.readOnly = false,
     this.validator,
     this.controller,
     this.prefixIcon,
@@ -39,6 +42,7 @@ class CustomTextField extends StatelessWidget {
           keyboardType: keyboardType,
           obscureText: obscureText,
           validator: validator,
+          readOnly: readOnly,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: prefixIcon,

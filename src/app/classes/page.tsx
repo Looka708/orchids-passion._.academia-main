@@ -61,21 +61,37 @@ export default function ClassesPage() {
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {classes.map((item) => {
                 const Icon = getIcon(item.icon);
+                const classImg = `/images/classes/${item.slug}.png`;
+
                 return (
-                  <Card key={item.id} className="flex flex-col transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
-                    <CardHeader className="flex flex-row items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Card key={item.id} className="group relative flex flex-col overflow-hidden transform transition-all duration-500 hover:scale-105 hover:shadow-2xl border-none">
+                    <div className="absolute inset-0 z-0 transition-transform duration-700 group-hover:scale-110">
+                      <img
+                        src={classImg}
+                        alt={item.name}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=600';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                    </div>
+
+                    <CardHeader className="relative z-10 flex flex-row items-center gap-4 text-white">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/20 backdrop-blur-md text-white border border-white/30">
                         <Icon className="h-6 w-6" />
                       </div>
-                      <CardTitle className="text-xl font-semibold">{item.name}</CardTitle>
+                      <CardTitle className="text-xl font-bold drop-shadow-md">{item.name}</CardTitle>
                     </CardHeader>
-                    <CardContent className="flex-grow">
-                      <p className="text-muted-foreground">{item.description}</p>
+
+                    <CardContent className="relative z-10 flex-grow text-white/90">
+                      <p className="text-sm line-clamp-2 drop-shadow-sm">{item.description}</p>
                     </CardContent>
-                    <CardFooter>
-                      <Button asChild className="w-full transition-transform duration-300 hover:scale-105">
+
+                    <CardFooter className="relative z-10 pb-6">
+                      <Button asChild className="w-full transition-all duration-300 bg-white text-primary hover:bg-primary hover:text-white border-none shadow-lg group-hover:shadow-primary/50">
                         <Link href={`/classes/${item.slug}`}>
-                          View Subjects <ArrowRight className="ml-2 h-4 w-4" />
+                          Explore Program <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </Link>
                       </Button>
                     </CardFooter>
