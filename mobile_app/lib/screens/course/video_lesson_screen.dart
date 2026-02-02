@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:passion_academia/models/course.dart';
+import 'package:passion_academia/core/services/youtube_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class VideoLessonScreen extends StatefulWidget {
   final Course course;
@@ -17,6 +19,9 @@ class VideoLessonScreen extends StatefulWidget {
 
 class _VideoLessonScreenState extends State<VideoLessonScreen> {
   late Chapter _activeChapter;
+  List<Map<String, dynamic>> _suggestedVideos = [];
+  bool _isLoadingVideos = false;
+  Map<String, dynamic>? _currentPlayingVideo;
 
   final List<Chapter> _chapters = [
     const Chapter(
@@ -32,6 +37,35 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
   void initState() {
     super.initState();
     _activeChapter = widget.initialChapter;
+    _fetchVideos();
+  }
+
+  Future<void> _fetchVideos() async {
+    setState(() {
+      _isLoadingVideos = true;
+      _suggestedVideos = [];
+      _currentPlayingVideo = null;
+    });
+
+    final query = '${widget.course.title} ${_activeChapter.title}';
+    final videos = await YoutubeService.searchVideos(query);
+
+    if (mounted) {
+      setState(() {
+        _suggestedVideos = videos;
+        if (videos.isNotEmpty) {
+          _currentPlayingVideo = videos.first;
+        }
+        _isLoadingVideos = false;
+      });
+    }
+  }
+
+  Future<void> _launchYoutubeVideo(String videoId) async {
+    final uri = Uri.parse('https://www.youtube.com/watch?v=$videoId');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -40,181 +74,274 @@ class _VideoLessonScreenState extends State<VideoLessonScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Video Player Mock
-            Stack(
-              children: [
-                AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Container(
+            // Video Player Area
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                children: [
+                  Container(
                     color: Colors.black,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.play_circle_fill,
+                    child: _currentPlayingVideo != null
+                        ? Image.network(
+                            _currentPlayingVideo!['thumbnail'],
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Center(
+                                child: Icon(Icons.error, color: Colors.white)),
+                          )
+                        : const Center(
+                            child: Icon(Icons.play_circle_fill,
+                                size: 60, color: Colors.white)),
+                  ),
+                  Container(
+                    color: Colors.black.withOpacity(0.4),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.play_circle_fill,
                               size: 60, color: Colors.white),
-                          const SizedBox(height: 12),
-                          Text(
-                            _activeChapter.title,
-                            style: const TextStyle(color: Colors.white70),
+                          onPressed: () {
+                            if (_currentPlayingVideo != null) {
+                              _launchYoutubeVideo(
+                                  _currentPlayingVideo!['videoId']);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text(
+                            _currentPlayingVideo?['title'] ??
+                                _activeChapter.title,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16),
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Tabs / Recommendations
+            Expanded(
+              child: ListView(
+                children: [
+                  // Lesson Info
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _activeChapter.title,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.course.title,
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            _buildInfoChip(
+                                Icons.video_library_outlined, '12 mins'),
+                            const SizedBox(width: 12),
+                            _buildInfoChip(
+                                Icons.description_outlined, 'Materials'),
+                            const SizedBox(width: 12),
+                            _buildInfoChip(Icons.quiz_outlined, 'Quiz'),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const Divider(),
+
+                  // YouTube Suggestions
+                  if (_isLoadingVideos)
+                    const Center(child: LinearProgressIndicator())
+                  else if (_suggestedVideos.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0, vertical: 8.0),
+                      child: Row(
+                        children: const [
+                          Icon(Icons.smart_display,
+                              color: Colors.red, size: 20),
+                          SizedBox(width: 8),
+                          Text('AI Recommended Videos',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
                         ],
                       ),
                     ),
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-              ],
-            ),
+                    SizedBox(
+                      height: 140,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: _suggestedVideos.length,
+                        itemBuilder: (context, index) {
+                          final video = _suggestedVideos[index];
+                          final isSelected = _currentPlayingVideo?['videoId'] ==
+                              video['videoId'];
 
-            // Lesson Info
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _activeChapter.title,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(fontWeight: FontWeight.bold),
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _currentPlayingVideo = video;
+                              });
+                            },
+                            child: Container(
+                              width: 160,
+                              margin: const EdgeInsets.only(right: 12),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: isSelected
+                                    ? Border.all(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                        width: 2)
+                                    : null,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.network(
+                                      video['thumbnail'],
+                                      height: 90,
+                                      width: 160,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 4.0),
+                                    child: Text(
+                                      video['title'],
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                        color: isSelected
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                            : null,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.course.title,
-                              style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.favorite_border),
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ],
+                    ),
+                    const Divider(),
+                  ],
+
+                  // Course Content List
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20.0, vertical: 12.0),
+                    child: Text('Course Content',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      _buildInfoChip(Icons.video_library_outlined, '12 mins'),
-                      const SizedBox(width: 12),
-                      _buildInfoChip(Icons.description_outlined, 'Materials'),
-                      const SizedBox(width: 12),
-                      _buildInfoChip(Icons.quiz_outlined, 'Quiz Available'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: _chapters.length,
+                    itemBuilder: (context, index) {
+                      final chapter = _chapters[index];
+                      final isActive = _activeChapter.id == chapter.id;
 
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.0),
-              child: Divider(),
-            ),
-
-            // Playlist Header
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Course Content',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text('${_chapters.length} Lessons',
-                      style: Theme.of(context).textTheme.bodySmall),
-                ],
-              ),
-            ),
-
-            // Playlist
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: _chapters.length,
-                itemBuilder: (context, index) {
-                  final chapter = _chapters[index];
-                  final isActive = _activeChapter.id == chapter.id;
-
-                  return ListTile(
-                    onTap: chapter.isLocked
-                        ? null
-                        : () {
-                            setState(() {
-                              _activeChapter = chapter;
-                            });
-                          },
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withOpacity(0.1)
-                            : (chapter.isLocked
-                                ? Colors.grey.withOpacity(0.1)
-                                : Theme.of(context)
+                      return ListTile(
+                        onTap: chapter.isLocked
+                            ? null
+                            : () {
+                                setState(() {
+                                  _activeChapter = chapter;
+                                });
+                                _fetchVideos(); // Refresh suggestions
+                              },
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? Theme.of(context)
                                     .colorScheme
-                                    .secondary
-                                    .withOpacity(0.2)),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        chapter.isLocked
-                            ? Icons.lock
-                            : (isActive
-                                ? Icons.play_arrow
-                                : Icons.play_arrow_outlined),
-                        size: 20,
-                        color: chapter.isLocked
-                            ? Colors.grey
-                            : (isActive
-                                ? Theme.of(context).colorScheme.primary
-                                : null),
-                      ),
-                    ),
-                    title: Text(
-                      chapter.title,
-                      style: TextStyle(
-                        fontWeight:
-                            isActive ? FontWeight.bold : FontWeight.normal,
-                        color: chapter.isLocked ? Colors.grey : null,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Lesson ${index + 1} • 10-15 mins',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    trailing: chapter.isCompleted
-                        ? const Icon(Icons.check_circle,
-                            color: Colors.green, size: 20)
-                        : (isActive
-                            ? const Icon(Icons.bar_chart,
-                                color: Colors.blue, size: 20)
-                            : null),
-                  );
-                },
+                                    .primary
+                                    .withOpacity(0.1)
+                                : (chapter.isLocked
+                                    ? Colors.grey.withOpacity(0.1)
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .secondary
+                                        .withOpacity(0.2)),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            chapter.isLocked
+                                ? Icons.lock
+                                : (isActive
+                                    ? Icons.play_arrow
+                                    : Icons.play_arrow_outlined),
+                            size: 20,
+                            color: chapter.isLocked
+                                ? Colors.grey
+                                : (isActive
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null),
+                          ),
+                        ),
+                        title: Text(chapter.title,
+                            style: TextStyle(
+                                fontWeight: isActive
+                                    ? FontWeight.bold
+                                    : FontWeight.normal)),
+                        subtitle: Text('Lesson ${index + 1} • 10-15 mins'),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 40),
+                ],
               ),
             ),
           ],
