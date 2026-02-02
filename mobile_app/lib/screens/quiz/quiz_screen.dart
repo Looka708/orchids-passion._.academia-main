@@ -110,7 +110,7 @@ class _QuizScreenState extends State<QuizScreen> {
     final auth = context.read<AuthProvider>();
     if (auth.isAuthenticated) {
       context.read<QuizProvider>().submitResult(
-            userId: auth.user!.id,
+            userId: auth.userProfile!.id,
             courseSlug: widget.courseSlug,
             subject: widget.subjectTitle,
             score: finalScore,

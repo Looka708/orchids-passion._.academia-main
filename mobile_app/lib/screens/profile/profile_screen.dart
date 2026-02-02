@@ -1,11 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:passion_academia/core/providers/auth_provider.dart';
 import 'package:passion_academia/widgets/common/stat_card.dart';
 import 'package:passion_academia/screens/auth/welcome_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 75,
+    );
+
+    if (image != null) {
+      final bytes = await image.readAsBytes();
+      if (!mounted) return;
+
+      final success =
+          await context.read<AuthProvider>().updateProfilePicture(bytes);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success
+              ? 'Profile picture updated!'
+              : 'Failed to update picture.'),
+          backgroundColor: success ? Colors.green : Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,31 +72,62 @@ class ProfileScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(
                         color: Theme.of(context).colorScheme.primary, width: 2),
-                    gradient: LinearGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                        Theme.of(context).colorScheme.primary.withOpacity(0.05),
-                      ],
-                    ),
                   ),
                 ),
-                CircleAvatar(
-                  radius: 54,
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                  child: Icon(Icons.person,
-                      size: 60, color: Theme.of(context).colorScheme.primary),
+                ClipOval(
+                  child: authProvider.userProfile?.photoUrl != null
+                      ? Image.network(
+                          authProvider.userProfile!.photoUrl!,
+                          width: 108,
+                          height: 108,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return const SizedBox(
+                              width: 108,
+                              height: 108,
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          },
+                        )
+                      : Container(
+                          width: 108,
+                          height: 108,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.1),
+                          child: Icon(Icons.person,
+                              size: 60,
+                              color: Theme.of(context).colorScheme.primary),
+                        ),
                 ),
+                if (authProvider.isLoading)
+                  const Positioned.fill(
+                    child: Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  ),
                 Positioned(
                   bottom: 0,
                   right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      shape: BoxShape.circle,
+                  child: GestureDetector(
+                    onTap: authProvider.isLoading ? null : _pickImage,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                          )
+                        ],
+                      ),
+                      child: const Icon(Icons.camera_alt,
+                          size: 16, color: Colors.white),
                     ),
-                    child:
-                        const Icon(Icons.edit, size: 16, color: Colors.white),
                   ),
                 ),
               ],
@@ -73,7 +140,15 @@ class ProfileScreen extends StatelessWidget {
                   .headlineSmall
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const Text('Elite Consistency Club Member'),
+            Text(
+              authProvider.userProfile?.role.toUpperCase() ?? 'MEMBER',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                letterSpacing: 2,
+              ),
+            ),
 
             const SizedBox(height: 32),
 

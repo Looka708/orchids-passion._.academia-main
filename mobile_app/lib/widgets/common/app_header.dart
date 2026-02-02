@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:passion_academia/core/providers/auth_provider.dart';
+import 'package:passion_academia/screens/profile/profile_screen.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
@@ -16,6 +19,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
     return AppBar(
       backgroundColor: transparent ? Colors.transparent : null,
       title: title != null
@@ -38,28 +43,49 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         if (actions != null) ...actions!,
         if (showProfile) ...[
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none),
-          ),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              'https://github.com/shadcn.png',
-              width: 32,
-              height: 32,
-              errorBuilder: (c, e, s) => Container(
-                width: 32,
-                height: 32,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                child: Icon(Icons.person,
-                    size: 20, color: Theme.of(context).colorScheme.primary),
-              ),
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (c) => const ProfileScreen()),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: auth.userProfile?.photoUrl != null
+                  ? Image.network(
+                      auth.userProfile!.photoUrl!,
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) =>
+                          _buildDefaultAvatar(context, auth),
+                    )
+                  : _buildDefaultAvatar(context, auth),
             ),
           ),
           const SizedBox(width: 16),
         ],
       ],
+    );
+  }
+
+  Widget _buildDefaultAvatar(BuildContext context, AuthProvider auth) {
+    return Container(
+      width: 32,
+      height: 32,
+      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+      child: Center(
+        child: Text(
+          auth.userProfile?.name.isNotEmpty == true
+              ? auth.userProfile!.name[0].toUpperCase()
+              : 'P',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ),
     );
   }
 

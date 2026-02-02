@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:passion_academia/screens/auth/login_screen.dart';
 import 'package:passion_academia/screens/auth/signup_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:passion_academia/core/providers/auth_provider.dart';
+import 'package:passion_academia/screens/home/home_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
+    // Auto-navigate to HomeScreen if authenticated
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (auth.isAuthenticated) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (c) => const HomeScreen()),
+          (route) => false,
+        );
+      }
+    });
+
     return Scaffold(
       body: Container(
         width: double.infinity,
