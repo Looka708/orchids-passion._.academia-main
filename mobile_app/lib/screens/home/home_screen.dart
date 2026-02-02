@@ -291,30 +291,34 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 16),
                   SizedBox(
                     height: 380,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: featuredCourses.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          width: 280,
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
-                          child: CourseCard(
-                            size: CardSize.featured,
-                            course: featuredCourses[index],
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CourseDetailScreen(
-                                      course: featuredCourses[index]),
+                    child: courseProvider.isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: featuredCourses.length,
+                            itemBuilder: (context, index) {
+                              return Container(
+                                width: 280,
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: CourseCard(
+                                  size: CardSize.featured,
+                                  course: featuredCourses[index],
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            CourseDetailScreen(
+                                                course: featuredCourses[index]),
+                                      ),
+                                    );
+                                  },
                                 ),
                               );
                             },
                           ),
-                        );
-                      },
-                    ),
                   ),
 
                   const SizedBox(height: 48),

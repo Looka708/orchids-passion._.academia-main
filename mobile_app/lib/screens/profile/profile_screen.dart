@@ -84,9 +84,9 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: StatCard(
-                          value: '1,250',
+                          value: '${authProvider.userXP}',
                           label: 'Total XP',
                           icon: Icons.stars,
                           color: Colors.amber,
@@ -95,7 +95,7 @@ class ProfileScreen extends StatelessWidget {
                       const SizedBox(width: 16),
                       Expanded(
                         child: StatCard(
-                          value: '12 Days',
+                          value: '${authProvider.userStreak} Days',
                           label: 'Streak',
                           icon: Icons.local_fire_department,
                           color: Colors.orange,

@@ -4,12 +4,21 @@ import 'package:passion_academia/core/theme.dart';
 import 'package:passion_academia/models/course.dart';
 import 'package:passion_academia/widgets/common/app_header.dart';
 
+import 'package:provider/provider.dart';
+import 'package:passion_academia/core/providers/quiz_provider.dart';
+import 'package:passion_academia/core/providers/auth_provider.dart';
+
 enum QuizState { intro, quiz, results }
 
 class QuizScreen extends StatefulWidget {
   final String subjectTitle;
+  final String courseSlug;
 
-  const QuizScreen({super.key, required this.subjectTitle});
+  const QuizScreen({
+    super.key,
+    required this.subjectTitle,
+    required this.courseSlug,
+  });
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -23,29 +32,21 @@ class _QuizScreenState extends State<QuizScreen> {
   Timer? _timer;
   final Map<int, int> _selectedAnswers = {};
 
-  final List<Question> _mockQuestions = [
-    const Question(
-      id: '1',
-      text: 'What is the powerhouse of the cell?',
-      options: ['Nucleus', 'Mitochondria', 'Ribosome', 'Golgi Apparatus'],
-      correctAnswer: 'Mitochondria',
-    ),
-    const Question(
-      id: '2',
-      text: 'پودے اپنی خوراک کس عمل سے تیار کرتے ہیں؟',
-      options: ['عمل تنفس', 'فوٹوسنتھیسز', 'انجذاب', 'انجماد'],
-      correctAnswer: 'فوٹوسنتھیسز',
-      language: 'urdu',
-    ),
-    const Question(
-      id: '3',
-      text: 'Which gas do plants absorb from the atmosphere?',
-      options: ['Oxygen', 'Nitrogen', 'Carbon Dioxide', 'Hydrogen'],
-      correctAnswer: 'Carbon Dioxide',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      context.read<QuizProvider>().fetchQuestions(
+            courseSlug: widget.courseSlug,
+            subject: widget.subjectTitle,
+          );
+    });
+  }
 
   void _startQuiz() {
+    final questions = context.read<QuizProvider>().questions;
+    if (questions.isEmpty) return;
+
     setState(() {
       _state = QuizState.quiz;
       _currentQuestionIndex = 0;
@@ -77,7 +78,8 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _nextQuestion() {
-    if (_currentQuestionIndex < _mockQuestions.length - 1) {
+    final questions = context.read<QuizProvider>().questions;
+    if (_currentQuestionIndex < questions.length - 1) {
       setState(() {
         _currentQuestionIndex++;
         _timeLeft = 20;
@@ -90,18 +92,32 @@ class _QuizScreenState extends State<QuizScreen> {
 
   void _finishQuiz() {
     _timer?.cancel();
+    final questions = context.read<QuizProvider>().questions;
     int correct = 0;
     _selectedAnswers.forEach((qIdx, oIdx) {
       if (oIdx != -1 &&
-          _mockQuestions[qIdx].options[oIdx] ==
-              _mockQuestions[qIdx].correctAnswer) {
+          questions[qIdx].options[oIdx] == questions[qIdx].correctAnswer) {
         correct++;
       }
     });
+
+    final finalScore = ((correct / questions.length) * 100).toInt();
     setState(() {
-      _score = ((correct / _mockQuestions.length) * 100).toInt();
+      _score = finalScore;
       _state = QuizState.results;
     });
+
+    final auth = context.read<AuthProvider>();
+    if (auth.isAuthenticated) {
+      context.read<QuizProvider>().submitResult(
+            userId: auth.user!.id,
+            courseSlug: widget.courseSlug,
+            subject: widget.subjectTitle,
+            score: finalScore,
+            totalQuestions: questions.length,
+            correctAnswers: correct,
+          );
+    }
   }
 
   @override
@@ -112,32 +128,57 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final quizProvider = context.watch<QuizProvider>();
+    final questions = quizProvider.questions;
+
     return Scaffold(
       appBar: AppHeader(
         title: _state == QuizState.quiz
-            ? 'Question ${_currentQuestionIndex + 1}/${_mockQuestions.length}'
+            ? 'Question ${_currentQuestionIndex + 1}/${questions.length}'
             : '${widget.subjectTitle} Quiz',
         showProfile: false,
       ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _buildBody(),
+      body: quizProvider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : questions.isEmpty
+              ? _buildEmptyState()
+              : AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: _buildBody(questions),
+                ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.quiz_outlined, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text('No questions available for this subject yet.'),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Go Back'),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(List<Question> questions) {
     switch (_state) {
       case QuizState.intro:
-        return _buildIntro();
+        return _buildIntro(questions);
       case QuizState.quiz:
-        return _buildQuiz();
+        return _buildQuiz(questions);
       case QuizState.results:
-        return _buildResults();
+        return _buildResults(questions);
     }
   }
 
-  Widget _buildIntro() {
+  Widget _buildIntro(List<Question> questions) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24.0),
@@ -164,7 +205,7 @@ class _QuizScreenState extends State<QuizScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Subject: ${widget.subjectTitle}\nQuestions: ${_mockQuestions.length}\nTime: 20s per question',
+            'Subject: ${widget.subjectTitle}\nQuestions: ${questions.length}\nTime: 20s per question',
             textAlign: TextAlign.center,
             style: TextStyle(
                 color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -187,8 +228,8 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-  Widget _buildQuiz() {
-    final question = _mockQuestions[_currentQuestionIndex];
+  Widget _buildQuiz(List<Question> questions) {
+    final question = questions[_currentQuestionIndex];
     final isUrdu = question.language == 'urdu';
 
     return Padding(
@@ -203,7 +244,7 @@ class _QuizScreenState extends State<QuizScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
-                    value: (_currentQuestionIndex + 1) / _mockQuestions.length,
+                    value: (_currentQuestionIndex + 1) / questions.length,
                     minHeight: 8,
                     backgroundColor: Theme.of(context).colorScheme.secondary,
                   ),
@@ -410,7 +451,7 @@ class _QuizScreenState extends State<QuizScreen> {
             onPressed: _selectedAnswers.containsKey(_currentQuestionIndex)
                 ? _nextQuestion
                 : null,
-            child: Text(_currentQuestionIndex == _mockQuestions.length - 1
+            child: Text(_currentQuestionIndex == questions.length - 1
                 ? 'See Results'
                 : 'Confirm Answer'),
           ),
@@ -419,7 +460,7 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-  Widget _buildResults() {
+  Widget _buildResults(List<Question> questions) {
     final bool isPassed = _score >= 70;
 
     return SingleChildScrollView(
@@ -463,7 +504,7 @@ class _QuizScreenState extends State<QuizScreen> {
               children: [
                 _buildResultStat(
                     'Correct',
-                    '${(_score * _mockQuestions.length / 100).toInt()}',
+                    '${(_score * questions.length / 100).toInt()}',
                     Colors.green),
                 const SizedBox(width: 16),
                 _buildResultStat(

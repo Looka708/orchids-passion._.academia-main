@@ -5,12 +5,25 @@ import 'package:passion_academia/core/providers/auth_provider.dart';
 import 'package:passion_academia/core/providers/course_provider.dart';
 import 'package:passion_academia/screens/auth/welcome_screen.dart';
 
-void main() {
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:passion_academia/core/providers/quiz_provider.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://miujeynpqelgdlduttxe.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pdWpleW5wcWVsZ2RsZHV0dHhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNjYzODUsImV4cCI6MjA4MTY0MjM4NX0.W29bhQjX-065P56ccOsONF3JElvFObXXB_uHsCG4bUc',
+  );
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CourseProvider()),
+        ChangeNotifierProvider(create: (_) => QuizProvider()),
       ],
       child: const PassionAcademiaApp(),
     ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:passion_academia/core/providers/auth_provider.dart';
 import 'package:passion_academia/widgets/common/custom_text_field.dart';
 import 'package:passion_academia/screens/home/home_screen.dart';
+import 'package:passion_academia/screens/auth/signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,7 +15,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
+
   bool _obscurePassword = true;
 
   @override
@@ -76,8 +77,9 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _isLoading ? null : _handleLogin,
-              child: _isLoading
+              onPressed:
+                  context.watch<AuthProvider>().isLoading ? null : _handleLogin,
+              child: context.watch<AuthProvider>().isLoading
                   ? const SizedBox(
                       height: 20,
                       width: 20,
@@ -102,19 +104,36 @@ class _LoginScreenState extends State<LoginScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {},
-                    icon: const Icon(Icons.g_mobiledata, size: 32),
-                    label: const Text('Google'),
+                    icon: const Icon(Icons.g_mobiledata, size: 24),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Google'),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {},
-                    icon: const Icon(Icons.apple),
-                    label: const Text('Apple'),
+                    icon: const Icon(Icons.apple, size: 20),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Apple'),
+                    ),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (c) => const SignupScreen()),
+                  );
+                },
+                child: const Text("Don't have an account? Sign Up"),
+              ),
             ),
           ],
         ),
@@ -123,17 +142,27 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    setState(() => _isLoading = true);
-    final success = await context.read<AuthProvider>().login(
-          _emailController.text,
-          _passwordController.text,
-        );
-    setState(() => _isLoading = false);
+    final authProvider = context.read<AuthProvider>();
 
-    if (success && mounted) {
+    final success = await authProvider.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (c) => const HomeScreen()),
         (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.error ?? 'Login failed'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }

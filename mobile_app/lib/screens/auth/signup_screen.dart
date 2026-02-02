@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:passion_academia/core/providers/auth_provider.dart';
 import 'package:passion_academia/widgets/common/custom_text_field.dart';
-import 'package:passion_academia/screens/home/home_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -15,7 +14,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
+
   bool _obscurePassword = true;
 
   @override
@@ -77,8 +76,10 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: _isLoading ? null : _handleSignup,
-              child: _isLoading
+              onPressed: context.watch<AuthProvider>().isLoading
+                  ? null
+                  : _handleSignup,
+              child: context.watch<AuthProvider>().isLoading
                   ? const SizedBox(
                       height: 20,
                       width: 20,
@@ -100,18 +101,31 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _handleSignup() async {
-    setState(() => _isLoading = true);
-    final success = await context.read<AuthProvider>().signup(
-          _nameController.text,
-          _emailController.text,
-          _passwordController.text,
-        );
-    setState(() => _isLoading = false);
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.signup(
+      _nameController.text.trim(),
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
 
-    if (success && mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (c) => const HomeScreen()),
-        (route) => false,
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created! Please sign in.'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.of(context).pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.error ?? 'Signup failed'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }

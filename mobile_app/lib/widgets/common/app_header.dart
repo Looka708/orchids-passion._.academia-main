@@ -22,10 +22,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           ? Text(title!, style: const TextStyle(fontWeight: FontWeight.bold))
           : Row(
               children: [
-                Image.asset('assets/images/logo.png',
-                    height: 32,
-                    errorBuilder: (c, e, s) =>
-                        const Icon(Icons.school, color: Colors.green)),
+                Icon(Icons.school,
+                    color: Theme.of(context).colorScheme.primary, size: 28),
                 const SizedBox(width: 8),
                 Text(
                   'Passion',
@@ -44,10 +42,20 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
             onPressed: () {},
             icon: const Icon(Icons.notifications_none),
           ),
-          const CircleAvatar(
-            radius: 16,
-            backgroundImage:
-                NetworkImage('https://github.com/shadcn.png'), // Placeholder
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.network(
+              'https://github.com/shadcn.png',
+              width: 32,
+              height: 32,
+              errorBuilder: (c, e, s) => Container(
+                width: 32,
+                height: 32,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                child: Icon(Icons.person,
+                    size: 20, color: Theme.of(context).colorScheme.primary),
+              ),
+            ),
           ),
           const SizedBox(width: 16),
         ],
