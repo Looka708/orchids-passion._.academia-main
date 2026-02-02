@@ -22,14 +22,10 @@ class _McqManagementScreenState extends State<McqManagementScreen> {
     final adminProvider = context.watch<AdminProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('MCQ Repository'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddMcqDialog(context),
-          ),
-        ],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddMcqDialog(context),
+        backgroundColor: Colors.indigo,
+        child: const Icon(Icons.add),
       ),
       body: adminProvider.isLoading
           ? const Center(child: InfinityLoader(message: 'Loading Questions...'))

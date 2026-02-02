@@ -24,14 +24,10 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
     final adminProvider = context.watch<AdminProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Course Management'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddCourseDialog(context),
-          ),
-        ],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddCourseDialog(context),
+        backgroundColor: Colors.indigo,
+        child: const Icon(Icons.add),
       ),
       body: courseProvider.isLoading
           ? const Center(child: InfinityLoader(message: 'Loading Courses...'))

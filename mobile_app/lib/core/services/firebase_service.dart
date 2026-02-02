@@ -147,6 +147,37 @@ class FirebaseService {
     }
   }
 
+  /// Fetches all users from Firestore
+  static Future<List<Map<String, dynamic>>> fetchAllUsers() async {
+    final url = Uri.parse(
+      'https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users?pageSize=100&key=$_apiKey',
+    );
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> documents = data['documents'] ?? [];
+
+        return documents.map((doc) {
+          final fields = doc['fields'] as Map<String, dynamic>;
+          final parsed = _parseFirestoreFields(fields);
+          // Ensure ID is included (from the document name path)
+          final path = doc['name'] as String;
+          final id = path.split('/').last; // email is usually the ID here
+          parsed['id'] = id;
+          return parsed;
+        }).toList();
+      } else {
+        debugPrint('Firestore Fetch All Error: ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Firestore Fetch All Exception: $e');
+      return [];
+    }
+  }
+
   /// Helper to parse Firestore's weird JSON format
   static Map<String, dynamic> _parseFirestoreFields(
       Map<String, dynamic> fields) {

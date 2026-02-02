@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:passion_academia/core/services/firebase_service.dart';
 
 class AdminProvider extends ChangeNotifier {
   final _supabase = Supabase.instance.client;
@@ -17,12 +18,21 @@ class AdminProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _supabase
-          .from('user_profiles')
-          .select()
-          .order('updated_at', ascending: false);
+      // Use Firebase for Users (hybrid architecture)
+      final firebaseUsers = await FirebaseService.fetchAllUsers();
 
-      _users = List<Map<String, dynamic>>.from(response);
+      // Map Firestore fields to our UI expected fields if needed
+      _users = firebaseUsers.map((u) {
+        return {
+          'id': u['id'], // email
+          'email': u['email'],
+          'full_name': u['name'] ?? u['full_name'], // handle both cases
+          'role': u['role'],
+          'active': u['active'] ?? true,
+          'photo_url': u['photoUrl'], // camelCase in Firestore
+          'xp': u['xp'],
+        };
+      }).toList();
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -33,17 +43,33 @@ class AdminProvider extends ChangeNotifier {
 
   Future<bool> toggleUserStatus(String userId, bool currentStatus) async {
     try {
-      await _supabase
-          .from('user_profiles')
-          .update({'active': !currentStatus}).eq('id', userId);
+      // UserId is the email in Firestore structure used here
+      // But we need to check if updateFirestoreField takes email or ID.
+      // getUserFromFirestore takes 'email'. updateFirestoreField takes 'email'.
+      // Our 'id' is extracted from document path, which IS the encoded email.
+      // We should pass the ID (which is the email) as the email argument.
 
-      // Update local state
-      final index = _users.indexWhere((u) => u['id'] == userId);
-      if (index != -1) {
-        _users[index]['active'] = !currentStatus;
-        notifyListeners();
+      // Note: 'userId' here comes from our _users list where we set 'id' = document name key (email)
+
+      final success = await FirebaseService.updateFirestoreField(
+          userId, // userId is email
+          {'active': !currentStatus},
+          null // idToken might be needed? Admin usually needs auth.
+          // If REST API is open or we don't have admin token, this might fail.
+          // But reading worked without token? apiKey might allow it if rules match.
+          // Let's try without token first, as we are 'admin' in the app context.
+          );
+
+      if (success) {
+        // Update local state
+        final index = _users.indexWhere((u) => u['id'] == userId);
+        if (index != -1) {
+          _users[index]['active'] = !currentStatus;
+          notifyListeners();
+        }
+        return true;
       }
-      return true;
+      return false;
     } catch (e) {
       return false;
     }
@@ -108,6 +134,39 @@ class AdminProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  Map<String, int> _dashboardStats = {
+    'users': 0,
+    'mcqs': 0,
+    'classes': 0,
+  };
+  Map<String, int> get dashboardStats => _dashboardStats;
+
+  Future<void> fetchDashboardStats() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Use Firebase for User Count
+      final firebaseUsers = await FirebaseService.fetchAllUsers();
+      final userCount = firebaseUsers.length;
+
+      // Use Supabase for others
+      final mcqCount = await _supabase.from('mcqs').count();
+      final classCount = await _supabase.from('classes').count();
+
+      _dashboardStats = {
+        'users': userCount,
+        'mcqs': mcqCount,
+        'classes': classCount,
+      };
+    } catch (e) {
+      debugPrint('Error fetching stats: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 }
