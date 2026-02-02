@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:passion_academia/core/services/firebase_service.dart';
+import 'package:passion_academia/core/services/supabase_service.dart';
 
 class UserProfile {
   final String id;
@@ -56,11 +57,13 @@ class UserProfile {
 
 class AuthProvider extends ChangeNotifier {
   UserProfile? _user;
+  String? _token;
   bool _isLoading = false;
   String? _error;
 
   UserProfile? get user => _user;
   UserProfile? get userProfile => _user;
+  String? get token => _token;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _user != null;
@@ -76,6 +79,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _loadUser() async {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString('user_profile');
+    _token = prefs.getString('auth_token');
     if (userJson != null) {
       _user = UserProfile.fromJson(jsonDecode(userJson));
       notifyListeners();
@@ -114,10 +118,14 @@ class AuthProvider extends ChangeNotifier {
         }
 
         _user = UserProfile.fromJson(firestoreData);
+        _token = authData?['idToken'];
 
         // Save to Local Storage
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_profile', jsonEncode(_user!.toJson()));
+        if (_token != null) {
+          await prefs.setString('auth_token', _token!);
+        }
 
         return true;
       } else {
@@ -141,8 +149,10 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> logout() async {
     _user = null;
+    _token = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('user_profile');
+    await prefs.remove('auth_token');
     notifyListeners();
   }
 
@@ -153,15 +163,15 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Upload to Storage
-      final photoUrl = await FirebaseService.uploadImage(imageBytes, _user!.id);
+      // 1. Upload to Supabase Storage
+      final photoUrl =
+          await SupabaseService.uploadProfilePicture(imageBytes, _user!.id);
       if (photoUrl == null) return false;
 
-      // 2. Update Firestore
-      final success = await FirebaseService.updateFirestoreField(
-        _user!.email,
-        {'photoUrl': photoUrl},
-      );
+      // 2. Update Supabase Database
+      // We try to update both 'users' and 'user_profiles' if they exist, or just the one we're using
+      final success =
+          await SupabaseService.updateProfileUrl(_user!.email, photoUrl);
 
       if (success) {
         // 3. Update local state

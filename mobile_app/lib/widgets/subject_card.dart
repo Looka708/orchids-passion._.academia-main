@@ -44,7 +44,7 @@ class SubjectCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${subject.lessonCount} Lessons',
+                '${subject.chapterCount} Chapters',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 12),

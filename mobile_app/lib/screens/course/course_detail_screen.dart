@@ -1,25 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:passion_academia/models/course.dart';
-import 'package:passion_academia/screens/quiz/quiz_screen.dart';
+import 'package:passion_academia/core/providers/course_provider.dart';
+import 'package:passion_academia/widgets/infinity_loader.dart';
+import 'package:passion_academia/screens/course/chapters_screen.dart';
 import 'package:passion_academia/screens/course/video_lesson_screen.dart';
 import 'package:passion_academia/widgets/subject_card.dart';
 
-class CourseDetailScreen extends StatelessWidget {
+class CourseDetailScreen extends StatefulWidget {
   final Course course;
 
   const CourseDetailScreen({super.key, required this.course});
 
-  // Mock subjects data
-  static const List<Subject> _subjects = [
-    Subject(id: 's1', title: 'Biology', icon: '🧬', lessonCount: 12),
-    Subject(id: 's2', title: 'Physics', icon: '⚡', lessonCount: 15),
-    Subject(id: 's3', title: 'Chemistry', icon: '🧪', lessonCount: 10),
-    Subject(id: 's4', title: 'Mathematics', icon: '📐', lessonCount: 20),
-    Subject(id: 's5', title: 'English', icon: '📚', lessonCount: 8),
-  ];
+  @override
+  State<CourseDetailScreen> createState() => _CourseDetailScreenState();
+}
+
+class _CourseDetailScreenState extends State<CourseDetailScreen> {
+  bool _isInitialLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      context.read<CourseProvider>().fetchSubjectsForCourse(widget.course.slug);
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (mounted) {
+        setState(() {
+          _isInitialLoading = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final courseProvider = context.watch<CourseProvider>();
+    final subjects = courseProvider.getSubjectsForCourse(widget.course.slug);
+
+    if (_isInitialLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF010001),
+        body: Center(child: InfinityLoader(message: 'Loading Course...')),
+      );
+    }
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -30,7 +55,7 @@ class CourseDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Hero/Description
+                  // Header section
                   _buildHeader(context),
                   const SizedBox(height: 32),
 
@@ -44,7 +69,7 @@ class CourseDetailScreen extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VideoLessonScreen(
-                                  course: course,
+                                  course: widget.course,
                                   initialChapter: const Chapter(
                                       id: '1',
                                       title: 'Introduction to the Course'),
@@ -66,7 +91,12 @@ class CourseDetailScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Course bookmarked!')),
+                            );
+                          },
                           icon: const Icon(Icons.bookmark_border),
                           color: Theme.of(context).colorScheme.primary,
                         ),
@@ -89,36 +119,58 @@ class CourseDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.8,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                    ),
-                    itemCount: _subjects.length,
-                    itemBuilder: (context, index) {
-                      final subject = _subjects[index];
-                      return SubjectCard(
-                        subject: subject,
-                        progress: 0.2 * (index + 1),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => QuizScreen(
-                                subjectTitle: subject.title,
-                                courseSlug: course.slug,
+                  subjects.isEmpty && courseProvider.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : subjects.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(40.0),
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.auto_stories_outlined,
+                                        size: 48,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.3)),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                        'No subjects/tests available for this course yet.',
+                                        textAlign: TextAlign.center),
+                                  ],
+                                ),
                               ),
+                            )
+                          : GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.8,
+                                mainAxisSpacing: 16,
+                                crossAxisSpacing: 16,
+                              ),
+                              itemCount: subjects.length,
+                              itemBuilder: (context, index) {
+                                final subject = subjects[index];
+                                return SubjectCard(
+                                  subject: subject,
+                                  progress: 0.0,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ChaptersScreen(
+                                          subjectTitle: subject.title,
+                                          courseSlug: widget.course.slug,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
                             ),
-                          );
-                        },
-                      );
-                    },
-                  ),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -130,6 +182,7 @@ class CourseDetailScreen extends StatelessWidget {
   }
 
   Widget _buildSliverAppBar(BuildContext context) {
+    final bool isAsset = widget.course.imageUrl.startsWith('assets/');
     return SliverAppBar(
       expandedHeight: 240,
       pinned: true,
@@ -137,10 +190,17 @@ class CourseDetailScreen extends StatelessWidget {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(
-              course.imageUrl,
-              fit: BoxFit.cover,
-            ),
+            isAsset
+                ? Image.asset(widget.course.imageUrl, fit: BoxFit.cover)
+                : Image.network(
+                    widget.course.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.broken_image,
+                          size: 60, color: Colors.grey),
+                    ),
+                  ),
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -161,6 +221,7 @@ class CourseDetailScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final course = widget.course;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

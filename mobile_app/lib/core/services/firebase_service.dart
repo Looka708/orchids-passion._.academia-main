@@ -63,7 +63,7 @@ class FirebaseService {
 
   /// Uploads a file to Firebase Storage via REST
   static Future<String?> uploadImage(
-      Uint8List imageBytes, String userId) async {
+      Uint8List imageBytes, String userId, String? idToken) async {
     final fileName = 'profile_pics/$userId.jpg';
     final encodedName = Uri.encodeComponent(fileName);
     final url = Uri.parse(
@@ -74,12 +74,17 @@ class FirebaseService {
       debugPrint('Uploading to: $url');
       debugPrint('Bytes length: ${imageBytes.length}');
 
+      final Map<String, String> headers = {
+        'Content-Type': 'image/jpeg',
+      };
+
+      if (idToken != null) {
+        headers['Authorization'] = 'Bearer $idToken';
+      }
+
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'image/jpeg',
-          'Content-Length': imageBytes.length.toString(),
-        },
+        headers: headers,
         body: imageBytes,
       );
 
@@ -104,7 +109,7 @@ class FirebaseService {
 
   /// Updates a specific field in a Firestore document
   static Future<bool> updateFirestoreField(
-      String email, Map<String, dynamic> fields) async {
+      String email, Map<String, dynamic> fields, String? idToken) async {
     final encodedEmail = Uri.encodeComponent(email.toLowerCase());
     final url = Uri.parse(
       'https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$encodedEmail?updateMask.fieldPaths=${fields.keys.join('&updateMask.fieldPaths=')}&key=$_apiKey',
@@ -124,8 +129,14 @@ class FirebaseService {
     });
 
     try {
+      final Map<String, String> headers = {};
+      if (idToken != null) {
+        headers['Authorization'] = 'Bearer $idToken';
+      }
+
       final response = await http.patch(
         url,
+        headers: headers,
         body: jsonEncode(firestorePayload),
       );
 

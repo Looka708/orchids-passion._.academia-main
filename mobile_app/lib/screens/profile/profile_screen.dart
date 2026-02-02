@@ -5,6 +5,8 @@ import 'package:passion_academia/core/providers/auth_provider.dart';
 import 'package:passion_academia/widgets/common/stat_card.dart';
 import 'package:passion_academia/screens/auth/welcome_screen.dart';
 import 'package:passion_academia/screens/profile/personal_info_screen.dart';
+import 'package:passion_academia/widgets/infinity_loader.dart';
+import 'package:passion_academia/screens/admin/admin_panel_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -104,9 +106,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                 ),
                 if (authProvider.isLoading)
-                  const Positioned.fill(
-                    child: Center(
-                      child: CircularProgressIndicator(color: Colors.white),
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: InfinityLoader(message: 'Updating...'),
+                      ),
                     ),
                   ),
                 Positioned(
@@ -216,6 +224,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildOption(context, 'Download Settings',
                   Icons.download_for_offline_outlined),
             ]),
+
+            if (authProvider.userProfile?.role == 'admin' ||
+                authProvider.userProfile?.role == 'owner')
+              _buildOptionGroup(context, 'Administration', [
+                _buildOption(
+                  context,
+                  'Admin Console',
+                  Icons.admin_panel_settings_outlined,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const AdminPanelScreen()),
+                    );
+                  },
+                ),
+              ]),
 
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),

@@ -1,0 +1,247 @@
+@use "sass:color";
+@use "sass:list";
+@use "sass:map";
+
+$brick-colors: (
+    "red": hsl(358, 78%, 49%),
+    "orange": hsl(26, 91%, 54%),
+    "green": hsl(80, 57%, 51%),
+    "blue": hsl(210, 69%, 42%)
+);
+
+// functions
+@function lighten($color, $l) {
+    @return color.scale($color, $lightness: $l);
+}
+
+// mixins
+@mixin brick-shading($name) {
+    --brick-left: var(--#{$name}400);
+    --brick-top: var(--#{$name}300);
+    fill: var(--#{$name}500);
+}
+
+@mixin brick-colors($name, $value) {
+    --#{$name}300: #{lighten($value, 40%)};
+    --#{$name}400: #{lighten($value, 20%)};
+    --#{$name}500: #{$value};
+}
+
+// styles
+* {
+    border: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --hue: 223;
+    --sat: 10%;
+    --gray50: hsl(var(--hue), var(--sat), 95%);
+    --gray950: hsl(var(--hue), var(--sat), 5%);
+
+    @each $name, $value in $brick-colors {
+        @include brick-colors($name, $value);
+    }
+
+    --trans-dur: 0.3s;
+    color-scheme: light dark;
+    font-size: clamp(1rem, 0.9rem + 0.5vw, 1.5rem);
+}
+
+body {
+    background-color: light-dark(var(--gray50), var(--gray950));
+    color: light-dark(var(--gray950), var(--gray50));
+    display: flex;
+    font: 1em / 1.5 sans-serif;
+    height: 100vh;
+    transition:
+        background-color var(--trans-dur),
+        color var(--trans-dur);
+}
+
+.pl {
+    display: block;
+    margin: auto;
+    width: 16em;
+    height: auto;
+
+    &__brick {
+        @each $name, $value in $brick-colors {
+            &--#{$name} {
+                @include brick-shading($name);
+            }
+        }
+
+        &-group {
+            animation: {
+                name: brick-bounce;
+                duration: 6s;
+                timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+                iteration-count: infinite;
+                // delay: 0s;
+                // play-state: paused;
+            }
+
+            ;
+
+            @for $g from 1 through 4 {
+                &--#{$g} {
+                    animation-name: brick-move-#{$g};
+                }
+            }
+        }
+    }
+}
+
+// animations
+@keyframes brick-bounce {
+
+    from,
+    12%,
+    15%,
+    27%,
+    30%,
+    42%,
+    45%,
+    62%,
+    65%,
+    77%,
+    80%,
+    92%,
+    95%,
+    to {
+        transform: translate(0, 0);
+    }
+
+    13.5%,
+    28.5%,
+    43.5%,
+    63.5%,
+    78.5%,
+    93.5% {
+        transform: translate(0, 6px);
+    }
+}
+
+@keyframes brick-move-1 {
+
+    from,
+    4%,
+    92%,
+    to {
+        transform: translate(0, 0);
+    }
+
+    12%,
+    19%,
+    77%,
+    84% {
+        transform: translate(17.5px, 10px);
+    }
+
+    27%,
+    34%,
+    62%,
+    69% {
+        transform: translate(35px, 20px);
+    }
+
+    42%,
+    54% {
+        transform: translate(52.5px, 30px);
+    }
+}
+
+@keyframes brick-move-2 {
+
+    from,
+    92%,
+    to {
+        transform: translate(0, -47px);
+    }
+
+    4% {
+        transform: translate(0, -87px);
+    }
+
+    8% {
+        transform: translate(-35px, -87px);
+    }
+
+    12%,
+    80% {
+        transform: translate(-35px, -67px);
+    }
+
+    84% {
+        transform: translate(-35px, -107px);
+    }
+
+    88% {
+        transform: translate(0, -67px);
+    }
+}
+
+@keyframes brick-move-3 {
+
+    from,
+    15%,
+    77%,
+    to {
+        transform: translate(0, -47px);
+    }
+
+    19% {
+        transform: translate(0, -87px);
+    }
+
+    23% {
+        transform: translate(-35px, -87px);
+    }
+
+    27%,
+    65% {
+        transform: translate(-35px, -67px);
+    }
+
+    69% {
+        transform: translate(-35px, -107px);
+    }
+
+    73% {
+        transform: translate(0, -67px);
+    }
+}
+
+@keyframes brick-move-4 {
+
+    from,
+    30%,
+    62%,
+    to {
+        transform: translate(0, -47px);
+    }
+
+    34% {
+        transform: translate(0, -87px);
+    }
+
+    38% {
+        transform: translate(-35px, -87px);
+    }
+
+    42%,
+    50% {
+        transform: translate(-35px, -67px);
+    }
+
+    54% {
+        transform: translate(-35px, -107px);
+    }
+
+    58% {
+        transform: translate(0, -67px);
+    }
+}

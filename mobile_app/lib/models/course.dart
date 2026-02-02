@@ -24,16 +24,42 @@ class Course {
   });
 
   factory Course.fromMap(Map<String, dynamic> map) {
+    final slug = map['slug'] ?? '';
+    final name = map['name'] ?? '';
+
+    String imageUrl = map['image_url'] ??
+        'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=600';
+
+    // Auto-detect premium courses and use local assets
+    String lowName = name.toLowerCase();
+    String lowSlug = slug.toLowerCase();
+
+    if (lowSlug.contains('afns') || lowName.contains('afns')) {
+      imageUrl = 'assets/images/afns-prep.png';
+    } else if (lowSlug.contains('paf') || lowName.contains('paf')) {
+      imageUrl = 'assets/images/paf-prep.png';
+    } else if (lowSlug.contains('mcj') || lowName.contains('mcj')) {
+      imageUrl = 'assets/images/mcj-prep.png';
+    } else if (lowSlug.contains('mcm') || lowName.contains('mcm')) {
+      imageUrl = 'assets/images/mcm-prep.png';
+    } else if (lowName.contains('class') || lowSlug.startsWith('class-')) {
+      // Extract number
+      final match =
+          RegExp(r'\d+').firstMatch(name) ?? RegExp(r'\d+').firstMatch(slug);
+      if (match != null) {
+        imageUrl = 'assets/images/class-${match.group(0)}.png';
+      }
+    }
+
     return Course(
-      id: map['id'].toString(),
-      title: map['name'] ?? '',
-      slug: map['slug'] ?? '',
+      id: map['id']?.toString() ?? '',
+      title: name,
+      slug: slug,
       description: map['description'] ?? '',
-      imageUrl: map['image_url'] ??
-          'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=600',
+      imageUrl: imageUrl,
       category: map['category'] ?? 'Academics',
-      subjectCount: 8, // Placeholder or fetch from related table
-      videoCount: 120, // Placeholder
+      subjectCount: 8,
+      videoCount: 120,
       rating: 4.8,
       students: 2000,
     );
@@ -44,13 +70,13 @@ class Subject {
   final String id;
   final String title;
   final String icon;
-  final int lessonCount;
+  final int chapterCount;
 
   const Subject({
     required this.id,
     required this.title,
     required this.icon,
-    this.lessonCount = 0,
+    this.chapterCount = 0,
   });
 }
 

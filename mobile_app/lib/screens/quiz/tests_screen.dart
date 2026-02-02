@@ -5,6 +5,7 @@ import 'package:passion_academia/widgets/course_card.dart';
 import 'package:provider/provider.dart';
 import 'package:passion_academia/core/providers/course_provider.dart';
 import 'package:passion_academia/screens/course/course_detail_screen.dart';
+import 'package:passion_academia/screens/quiz/quiz_screen.dart';
 
 class TestsScreen extends StatelessWidget {
   const TestsScreen({super.key});
@@ -208,7 +209,18 @@ class TestsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const QuizScreen(
+                    subjectTitle: 'Daily Challenge',
+                    courseSlug: 'ai-generated',
+                    isAiGenerated: true,
+                  ),
+                ),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: Theme.of(context).colorScheme.primary,

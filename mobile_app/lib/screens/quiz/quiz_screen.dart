@@ -2,8 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:passion_academia/core/theme.dart';
 import 'package:passion_academia/models/course.dart';
-import 'package:passion_academia/widgets/common/app_header.dart';
-
+import 'package:passion_academia/widgets/infinity_loader.dart';
 import 'package:provider/provider.dart';
 import 'package:passion_academia/core/providers/quiz_provider.dart';
 import 'package:passion_academia/core/providers/auth_provider.dart';
@@ -13,11 +12,17 @@ enum QuizState { intro, quiz, results }
 class QuizScreen extends StatefulWidget {
   final String subjectTitle;
   final String courseSlug;
+  final String? chapterTitle;
+  final int mcqLimit;
+  final bool isAiGenerated;
 
   const QuizScreen({
     super.key,
     required this.subjectTitle,
     required this.courseSlug,
+    this.chapterTitle,
+    this.mcqLimit = 20,
+    this.isAiGenerated = false,
   });
 
   @override
@@ -35,12 +40,20 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      context.read<QuizProvider>().fetchQuestions(
-            courseSlug: widget.courseSlug,
-            subject: widget.subjectTitle,
-          );
-    });
+    if (!widget.isAiGenerated) {
+      Future.microtask(() {
+        context.read<QuizProvider>().fetchQuestions(
+              courseSlug: widget.courseSlug,
+              subject: widget.subjectTitle,
+              chapter: widget.chapterTitle,
+              mcqLimit: widget.mcqLimit,
+            );
+      });
+    } else {
+      Future.microtask(() {
+        context.read<QuizProvider>().generateAiQuiz();
+      });
+    }
   }
 
   void _startQuiz() {
@@ -131,38 +144,54 @@ class _QuizScreenState extends State<QuizScreen> {
     final quizProvider = context.watch<QuizProvider>();
     final questions = quizProvider.questions;
 
-    return Scaffold(
-      appBar: AppHeader(
-        title: _state == QuizState.quiz
-            ? 'Question ${_currentQuestionIndex + 1}/${questions.length}'
-            : '${widget.subjectTitle} Quiz',
-        showProfile: false,
-      ),
-      body: quizProvider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : questions.isEmpty
-              ? _buildEmptyState()
-              : AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: _buildBody(questions),
-                ),
-    );
-  }
+    if (quizProvider.isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(child: InfinityLoader(message: 'Loading Quiz...')),
+      );
+    }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.quiz_outlined, size: 64, color: Colors.grey),
-          const SizedBox(height: 16),
-          const Text('No questions available for this subject yet.'),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Go Back'),
+    if (questions.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: Text(widget.subjectTitle)),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.sentiment_dissatisfied,
+                  size: 60, color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text('No questions found for this selection.'),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Go Back'),
+              ),
+            ],
           ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('${widget.subjectTitle} Quiz'),
+        actions: [
+          if (_state == QuizState.quiz)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Center(
+                child: Text(
+                  '${_currentQuestionIndex + 1}/${questions.length}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
         ],
+      ),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _buildBody(questions),
       ),
     );
   }

@@ -8,6 +8,7 @@ import 'package:passion_academia/screens/auth/welcome_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:passion_academia/core/providers/quiz_provider.dart';
+import 'package:passion_academia/core/providers/admin_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +25,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CourseProvider()),
         ChangeNotifierProvider(create: (_) => QuizProvider()),
+        ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
       child: const PassionAcademiaApp(),
     ),
