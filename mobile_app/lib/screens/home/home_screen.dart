@@ -10,7 +10,6 @@ import 'package:passion_academia/widgets/common/stat_card.dart';
 import 'package:passion_academia/core/providers/auth_provider.dart';
 import 'package:passion_academia/core/providers/course_provider.dart';
 import 'package:passion_academia/widgets/home/xp_progress_bar.dart';
-import 'package:passion_academia/widgets/home/social_activity_feed.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -138,22 +137,76 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 32),
 
-                  // AI Recommendations
-                  _buildRecommendations(context, courseProvider, authProvider),
-
-                  const SizedBox(height: 32),
-
-                  // Social Activity Feed
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.0),
-                    child: SocialActivityFeed(),
+                  // Recommended for You (AI Suggestions Replacement)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.auto_awesome_rounded,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Recommended for You',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 110,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: featuredCourses.length.clamp(0, 3),
+                            itemBuilder: (context, index) {
+                              final course = featuredCourses[index];
+                              return Container(
+                                width: 280,
+                                margin: const EdgeInsets.only(right: 12),
+                                child: CourseCard(
+                                  size: CardSize.compact,
+                                  course: course,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            CourseDetailScreen(course: course),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
-                  const SizedBox(height: 32),
-
+                  const SizedBox(height: 48),
                   // Hero Section (Discovery Title)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -537,111 +590,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  String _getIconForCourse(String slug) {
-    if (slug.contains('afns')) return '🎖️';
-    if (slug.contains('paf')) return '✈️';
-    if (slug.contains('mcj')) return '⚖️';
-    if (slug.contains('mcm')) return '🏥';
-    return '📚';
-  }
-
-  Widget _buildRecommendations(
-      BuildContext context, CourseProvider provider, AuthProvider auth) {
-    final recommended = provider.getRecommendations(auth.userProfile?.course);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Row(
-            children: [
-              const Icon(Icons.auto_awesome, color: Colors.amber, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                'AI Tailored for You',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 160,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: recommended.length,
-            itemBuilder: (context, index) {
-              final course = recommended[index];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (c) => CourseDetailScreen(course: course),
-                    ),
-                  );
-                },
-                child: Container(
-                  width: 140,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(16)),
-                        child: Container(
-                          height: 80,
-                          width: double.infinity,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.1),
-                          child: Center(
-                            child: Text(
-                              _getIconForCourse(course.slug),
-                              style: const TextStyle(fontSize: 32),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          course.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }

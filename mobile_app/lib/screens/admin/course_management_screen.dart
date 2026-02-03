@@ -77,39 +77,21 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      color: Colors.white,
       child: TextField(
         controller: _searchController,
-        onChanged: (value) => setState(() => _searchQuery = value),
+        onChanged: (v) => setState(() => _searchQuery = v),
         decoration: InputDecoration(
-          hintText: 'Search classes, categories, or slugs...',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() => _searchQuery = '');
-                  },
-                )
-              : null,
+          hintText: 'Search programs, categories, or slugs...',
+          prefixIcon:
+              const Icon(Icons.search_rounded, color: Color(0xFF64748B)),
           filled: true,
-          fillColor: Colors.grey[100],
+          fillColor: const Color(0xFFF1F5F9),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
         ),
       ),
     );
@@ -135,45 +117,62 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
 
   Widget _buildCourseCard(BuildContext context, dynamic course,
       AdminProvider admin, CourseProvider provider) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey[200]!),
-      ),
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor:
-              Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          child: Text(
-            course.title[0].toUpperCase(),
-            style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEF2FF),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: Text(
+              course.title[0].toUpperCase(),
+              style: const TextStyle(
+                color: Color(0xFF4F46E5),
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+              ),
+            ),
           ),
         ),
         title: Text(
           course.title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            color: Color(0xFF0F172A),
+          ),
         ),
-        subtitle: Row(
-          children: [
-            _buildBadge(course.category, Colors.indigo),
-            const SizedBox(width: 8),
-            _buildBadge(course.slug, Colors.blueGrey),
-          ],
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(
+            children: [
+              _buildBadge(course.category, const Color(0xFF4F46E5)),
+              const SizedBox(width: 8),
+              _buildBadge(course.slug, const Color(0xFF64748B)),
+            ],
+          ),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit_outlined, color: Colors.blue),
+              icon:
+                  const Icon(Icons.edit_note_rounded, color: Color(0xFF4F46E5)),
               onPressed: () => _showCourseDialog(context, course: course),
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              icon: const Icon(Icons.delete_sweep_rounded,
+                  color: Color(0xFFEF4444)),
               onPressed: () => _confirmDelete(context, course, admin, provider),
             ),
           ],
@@ -187,12 +186,17 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Text(
         text.toUpperCase(),
-        style:
-            TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: color,
+          fontSize: 8,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }

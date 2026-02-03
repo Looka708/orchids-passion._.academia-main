@@ -23,9 +23,6 @@ class QuizProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Artificial delay to show the premium pencil loader
-      await Future.delayed(const Duration(seconds: 2));
-
       debugPrint(
           'Fetching MCQs for: $courseSlug, $subject, Chapter: $chapter (Limit: $mcqLimit)');
 
@@ -118,10 +115,7 @@ class QuizProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Simulate AI 'Think Time' with Lego Loader
-      await Future.delayed(const Duration(seconds: 3));
-
-      // 2. Fetch random questions from the database (RPC call would be better, but client-side random is okay for now)
+      // 1. Fetch random questions from the database
       final response = await _supabase
           .from('mcqs')
           .select()

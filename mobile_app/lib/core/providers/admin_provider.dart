@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:passion_academia/core/services/firebase_service.dart';
+import 'package:passion_academia/models/report_models.dart';
 
 class AdminProvider extends ChangeNotifier {
   final _supabase = Supabase.instance.client;
@@ -240,6 +241,179 @@ class AdminProvider extends ChangeNotifier {
       };
     } catch (e) {
       debugPrint('Error fetching stats: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> sendGlobalNotification(
+      String title, String message, String type) async {
+    try {
+      final users = await FirebaseService.fetchAllUsers();
+      bool allSuccessful = true;
+
+      for (var user in users) {
+        final email = user['email'] as String?;
+        if (email != null) {
+          // Log as activity in each user's collection
+          final success = await FirebaseService.logActivity(
+              email,
+              type,
+              0,
+              {
+                'title': title,
+                'message': message,
+                'isGlobal': true,
+                'adminSent': true,
+              },
+              null);
+          if (!success) allSuccessful = false;
+        }
+      }
+      return allSuccessful;
+    } catch (e) {
+      debugPrint('Error sending global notification: $e');
+      return false;
+    }
+  }
+
+  Future<bool> scheduleBroadcast(Map<String, dynamic> broadcast) async {
+    try {
+      return await FirebaseService.saveBroadcast(broadcast);
+    } catch (e) {
+      debugPrint('Error scheduling broadcast: $e');
+      return false;
+    }
+  }
+
+  Future<List<UserActivityReport>> fetchUserActivityReport({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final data = await FirebaseService.aggregateUserActivities(
+        startDate: startDate,
+        endDate: endDate,
+      );
+      return data.map((json) => UserActivityReport.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('Error fetching user activity report: $e');
+      return [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<List<QuizPerformanceReport>> fetchQuizPerformanceReport({
+    DateTime? startDate,
+    DateTime? endDate,
+    String? subject,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      // Fetch from Supabase directly for better aggregation
+      var query = _supabase.from('results').select();
+      if (startDate != null)
+        query = query.gte('created_at', startDate.toIso8601String());
+      if (endDate != null)
+        query = query.lte('created_at', endDate.toIso8601String());
+      if (subject != null && subject != 'All')
+        query = query.eq('subject', subject);
+
+      final results = await query;
+
+      // Process results into subject-wise reports
+      Map<String, List<Map<String, dynamic>>> groupedBySubject = {};
+      for (var r in results) {
+        final sub = r['subject'] ?? 'General';
+        groupedBySubject
+            .putIfAbsent(sub, () => [])
+            .add(r as Map<String, dynamic>);
+      }
+
+      return groupedBySubject.entries.map((entry) {
+        final subResults = entry.value;
+        final scores =
+            subResults.map((r) => (r['score'] as num).toDouble()).toList();
+        final avgScore = scores.isEmpty
+            ? 0.0
+            : scores.reduce((a, b) => a + b) / scores.length;
+        final passRate = subResults.isEmpty
+            ? 0.0
+            : subResults.where((r) => (r['score'] as num) >= 70).length /
+                subResults.length;
+
+        // Simple distribution
+        Map<String, double> distribution = {
+          '0-40': subResults
+              .where((r) => (r['score'] as num) < 40)
+              .length
+              .toDouble(),
+          '40-70': subResults
+              .where(
+                  (r) => (r['score'] as num) >= 40 && (r['score'] as num) < 70)
+              .length
+              .toDouble(),
+          '70-100': subResults
+              .where((r) => (r['score'] as num) >= 70)
+              .length
+              .toDouble(),
+        };
+
+        return QuizPerformanceReport(
+          subject: entry.key,
+          totalAttempts: subResults.length,
+          uniqueAttempts: subResults.map((r) => r['user_id']).toSet().length,
+          averageScore: avgScore,
+          passRate: passRate,
+          scoreDistribution: distribution,
+          questionAnalysis: [], // Advanced analysis would require joining with individual answers
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error fetching quiz performance report: $e');
+      return [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<List<CourseEngagementReport>> fetchCourseEngagementReport({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final courses = await _supabase.from('classes').select();
+      final results = await _supabase.from('results').select();
+
+      return courses.map((course) {
+        final slug = course['slug'];
+        final courseResults =
+            results.where((r) => r['course_slug'] == slug).toList();
+        final uniqueStudents =
+            courseResults.map((r) => r['user_id']).toSet().length;
+
+        return CourseEngagementReport(
+          courseId: course['id'].toString(),
+          courseTitle: course['title'],
+          totalEnrollments: uniqueStudents, // Simplified enrollment metric
+          activeStudents: uniqueStudents,
+          completionRate: 0.0, // Needs progress tracking data
+          averageProgress: 0.0,
+          enrollmentTrends: [],
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error fetching course engagement report: $e');
+      return [];
     } finally {
       _isLoading = false;
       notifyListeners();

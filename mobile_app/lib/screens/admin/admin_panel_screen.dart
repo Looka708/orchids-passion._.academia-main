@@ -6,6 +6,8 @@ import 'package:passion_academia/widgets/infinity_loader.dart';
 import 'package:passion_academia/screens/admin/user_management_screen.dart';
 import 'package:passion_academia/screens/admin/course_management_screen.dart';
 import 'package:passion_academia/screens/admin/mcq_management_screen.dart';
+import 'package:passion_academia/screens/admin/notification_panel.dart';
+import 'package:passion_academia/screens/admin/reports_screen.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -21,7 +23,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     Future.microtask(() {
       context.read<AdminProvider>().fetchDashboardStats();
       context.read<CourseProvider>().fetchCourses();
@@ -47,28 +49,68 @@ class _AdminPanelScreenState extends State<AdminPanelScreen>
     }
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.grey[50], // Match web bg-slate-50
+      backgroundColor: const Color(0xFFF8FAFC), // Slate 50
       appBar: AppBar(
         title: const Text(
-          'Admin Dashboard',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          'Command Center',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 22,
+            letterSpacing: -0.5,
+          ),
         ),
+        centerTitle: false,
         elevation: 0,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.indigo,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: Colors.indigo,
-          isScrollable: true,
-          tabs: const [
-            Tab(icon: Icon(Icons.grid_view), text: 'Overview'),
-            Tab(icon: Icon(Icons.people), text: 'Users'),
-            Tab(icon: Icon(Icons.school), text: 'Classes'),
-            Tab(icon: Icon(Icons.quiz), text: 'MCQs'),
-          ],
+        foregroundColor: const Color(0xFF0F172A), // Slate 900
+        actions: [
+          IconButton(
+            onPressed: () => adminProvider.fetchDashboardStats(),
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+          const SizedBox(width: 8),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(50),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9), // Slate 100
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Colors.white,
+              unselectedLabelColor: const Color(0xFF64748B), // Slate 500
+              indicatorSize: TabBarIndicatorSize.tab,
+              indicator: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: const Color(0xFF4F46E5), // Indigo 600
+              ),
+              isScrollable: true,
+              dividerColor: Colors.transparent,
+              tabs: const [
+                Tab(
+                    child: Text('Overview',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                Tab(
+                    child: Text('Students',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                Tab(
+                    child: Text('Programs',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                Tab(
+                    child: Text('Questions',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                Tab(
+                    child: Text('Alerts',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                Tab(
+                    child: Text('Reports',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+              ],
+            ),
+          ),
         ),
       ),
       body: TabBarView(
@@ -78,6 +120,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen>
           const UserManagementScreen(), // Reusing existing screens as tabs
           const CourseManagementScreen(),
           const McqManagementScreen(),
+          const NotificationPanel(),
+          const ReportsScreen(),
         ],
       ),
     );
@@ -91,24 +135,24 @@ class _AdminPanelScreenState extends State<AdminPanelScreen>
         children: [
           // Header Text
           const Text(
-            'Admin Dashboard',
+            'System Overview',
             style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.transparent,
-              decoration: TextDecoration.none,
-              decorationColor: Colors.indigo,
-              shadows: [Shadow(color: Colors.black, offset: Offset(0, -5))],
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -1,
+              color: Color(0xFF0F172A),
             ),
-          ).foregroundGradient(
-            const LinearGradient(colors: [Colors.indigo, Colors.purple]),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Manage users, classes, and monitor database statistics.',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+          const SizedBox(height: 4),
+          Text(
+            'Monitor performance and manage core assets.',
+            style: TextStyle(
+              fontSize: 15,
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.w500,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
 
           // Quick Stats Grid
           GridView.count(
@@ -151,29 +195,29 @@ class _AdminPanelScreenState extends State<AdminPanelScreen>
           // Action Buttons
           Row(
             children: [
-              Expanded(
-                child: _buildActionButton(
-                  context,
-                  'Add New MCQ',
-                  Icons.add_circle_outline,
-                  Colors.indigo,
-                  () => _tabController.animateTo(3),
-                ),
+              _buildFastAction(
+                'New Q',
+                Icons.add_task_rounded,
+                const Color(0xFF4F46E5),
+                () => _tabController.animateTo(3),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildActionButton(
-                  context,
-                  'Generate Exam',
-                  Icons.description_outlined,
-                  Colors.teal,
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Exam Generator coming soon!')),
-                    );
-                  },
-                ),
+              _buildFastAction(
+                'Broadcast',
+                Icons.sensors_rounded,
+                const Color(0xFFF59E0B),
+                () => _tabController.animateTo(4),
+              ),
+              _buildFastAction(
+                'Users',
+                Icons.group_add_rounded,
+                const Color(0xFF10B981),
+                () => _tabController.animateTo(1),
+              ),
+              _buildFastAction(
+                'Reports',
+                Icons.analytics_rounded,
+                const Color(0xFFEC4899),
+                () => _tabController.animateTo(5),
               ),
             ],
           ),
@@ -181,77 +225,89 @@ class _AdminPanelScreenState extends State<AdminPanelScreen>
           const SizedBox(height: 32),
 
           // Recent Database Overview
-          Card(
-            elevation: 2,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.storage, color: Colors.indigo),
-                      SizedBox(width: 8),
-                      Text(
-                        'Recent Database Overview',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Consumer<CourseProvider>(
-                  builder: (context, provider, _) {
-                    final courses = provider.courses.take(5).toList();
-                    if (courses.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Text('No courses found.'),
-                      );
-                    }
-                    return ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: courses.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final course = courses[index];
-                        return ListTile(
-                          leading: Text(
-                            _getIconForCourse(course.slug),
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                          title: Text(course.title),
-                          trailing: const Text(
-                            'View',
-                            style: TextStyle(
-                                color: Colors.indigo,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          onTap: () => _tabController.animateTo(2),
-                        );
-                      },
-                    );
-                  },
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () =>
-                          _tabController.animateTo(3), // Go to MCQs
-                      child: const Text('View All MCQs'),
-                    ),
-                  ),
-                ),
-              ],
+          const Text(
+            'Latest Programs',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+              color: Color(0xFF0F172A),
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 16),
+          Consumer<CourseProvider>(
+            builder: (context, provider, _) {
+              final courses = provider.courses.take(5).toList();
+              if (courses.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: const Center(
+                    child: Text('No programs found',
+                        style: TextStyle(color: Color(0xFF64748B))),
+                  ),
+                );
+              }
+              return Column(
+                children: courses.map((course) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEF2FF),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.school_rounded,
+                              color: Color(0xFF4F46E5), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                course.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                              Text(
+                                course.category,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF64748B),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.chevron_right_rounded,
+                            color: const Color(0xFFCBD5E1), size: 18),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+          const SizedBox(height: 32),
         ],
       ),
     );
@@ -260,50 +316,45 @@ class _AdminPanelScreenState extends State<AdminPanelScreen>
   Widget _buildStatCard(
       String title, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border(left: BorderSide(color: color, width: 4)),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF0F172A).withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  title.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                    letterSpacing: 0.5,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(icon, color: color, size: 18),
-            ],
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(height: 8),
-          Flexible(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF0F172A),
+              letterSpacing: -1,
+            ),
+          ),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF64748B),
             ),
           ),
         ],
@@ -311,51 +362,36 @@ class _AdminPanelScreenState extends State<AdminPanelScreen>
     );
   }
 
-  Widget _buildActionButton(BuildContext context, String label, IconData icon,
-      Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        height: 100,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 28),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+  Widget _buildFastAction(
+      String label, IconData icon, Color color, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF475569),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  String _getIconForCourse(String slug) {
-    if (slug.contains('afns')) return '🎖️';
-    if (slug.contains('paf')) return '✈️';
-    if (slug.contains('mcj')) return '⚖️';
-    if (slug.contains('mcm')) return '🏥';
-    return '📚';
   }
 }
 

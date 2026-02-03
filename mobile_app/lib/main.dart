@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:passion_academia/core/config/app_config.dart';
 import 'package:provider/provider.dart';
 import 'package:passion_academia/core/theme.dart';
 import 'package:passion_academia/core/providers/auth_provider.dart';
@@ -13,15 +14,31 @@ import 'package:passion_academia/core/providers/admin_provider.dart';
 import 'package:passion_academia/core/providers/leaderboard_provider.dart';
 import 'package:passion_academia/core/providers/notification_provider.dart';
 import 'package:passion_academia/screens/home/home_screen.dart';
+import 'package:passion_academia/core/services/local_notification_service.dart';
+
+import 'package:passion_academia/screens/error/global_error_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Set up Global Error Boundary
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return GlobalErrorScreen(details: details);
+  };
+
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    // Log to external service (e.g. Sentry/Firebase Crashlytics) here in production
+    debugPrint('GLOBAL ERROR: ${details.exception}');
+  };
+
   await Supabase.initialize(
-    url: 'https://miujeynpqelgdlduttxe.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pdWpleW5wcWVsZ2RsZHV0dHhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNjYzODUsImV4cCI6MjA4MTY0MjM4NX0.W29bhQjX-065P56ccOsONF3JElvFObXXB_uHsCG4bUc',
+    url: AppConfig.supabaseUrl,
+    anonKey: AppConfig.supabaseAnonKey,
   );
+
+  await LocalNotificationService.initialize();
+  await LocalNotificationService.requestPermission();
 
   runApp(
     MultiProvider(

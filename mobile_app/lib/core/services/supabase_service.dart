@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
@@ -26,7 +27,7 @@ class SupabaseService {
       // Add timestamp for cache busting if needed, or just return publicUrl
       return '$publicUrl?t=${DateTime.now().millisecondsSinceEpoch}';
     } catch (e) {
-      print('Supabase Storage Error: $e');
+      debugPrint('Supabase Storage Error: $e');
       return null;
     }
   }
@@ -40,7 +41,7 @@ class SupabaseService {
           .update({'photo_url': photoUrl}).ilike('email', email);
       return true;
     } catch (e) {
-      print('Supabase DB Error: $e');
+      debugPrint('Supabase DB Error: $e');
       return false;
     }
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:passion_academia/models/notification.dart';
 import 'package:passion_academia/core/services/firebase_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passion_academia/core/services/local_notification_service.dart';
 
 class NotificationProvider extends ChangeNotifier {
   List<AppNotification> _notifications = [];
@@ -16,32 +17,87 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Fetch activities from Firestore (as a source of notifications)
-      // Note: We need a fetchActivities method in FirebaseService
+      // 1. Fetch user specific activities
       final activities = await FirebaseService.getUserActivities(email, token);
 
-      final List<AppNotification> remoteNotifications = activities.map((a) {
+      // 2. NEW: Fetch central broadcasts (scheduled)
+      final broadcasts = await FirebaseService.fetchBroadcasts();
+
+      final List<AppNotification> userNotifications = activities.map((a) {
+        final details = a['details'] as Map<String, dynamic>?;
+        final isGlobal = details?['isGlobal'] == true;
+
         return AppNotification(
           id: a['id'],
-          title: _getNotificationTitleForType(a['type']),
-          message: _getNotificationMessage(a),
+          title: isGlobal
+              ? (details?['title'] ?? 'Announcement')
+              : _getNotificationTitleForType(a['type']),
+          message: isGlobal
+              ? (details?['message'] ?? '')
+              : _getNotificationMessage(a),
           type: _getNotificationType(a['type']),
           timestamp: DateTime.parse(a['timestamp']),
-          isRead:
-              false, // We'll manage read status locally for now or via Firestore
+          isRead: false,
         );
       }).toList();
 
-      // 2. Load read status from local storage
+      // Convert broadcasts to notifications (Filter by scheduled time)
+      final now = DateTime.now();
+      final List<AppNotification> broadcastNotifications =
+          broadcasts.where((b) {
+        final scheduledAt = DateTime.parse(b['scheduledAt']);
+        return scheduledAt.isBefore(now);
+      }).map((b) {
+        return AppNotification(
+          id: 'bc_${b['id']}',
+          title: b['title'] ?? 'Announcement',
+          message: b['message'] ?? '',
+          type: _getNotificationType(b['type']),
+          timestamp: DateTime.parse(b['scheduledAt']),
+          isRead: false,
+        );
+      }).toList();
+
+      final allNotifications = [
+        ...userNotifications,
+        ...broadcastNotifications
+      ];
+      // Sort by timestamp descending
+      allNotifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+      // 3. Load read status from local storage
       final prefs = await SharedPreferences.getInstance();
       final readIds = prefs.getStringList('read_notification_ids') ?? [];
 
-      _notifications = remoteNotifications.map((n) {
+      _notifications = allNotifications.map((n) {
         if (readIds.contains(n.id)) {
           return n.copyWith(isRead: true);
         }
         return n;
       }).toList();
+
+      // NEW: Trigger local notifications for new items
+      final lastNotificationId = prefs.getString('last_notification_id');
+      if (allNotifications.isNotEmpty &&
+          allNotifications.first.id != lastNotificationId) {
+        // Find how many are newer than the last one we saw
+        final newItems = lastNotificationId == null
+            ? [allNotifications.first]
+            : allNotifications
+                .takeWhile((n) => n.id != lastNotificationId)
+                .toList();
+
+        for (var item in newItems) {
+          LocalNotificationService.showNotification(
+            id: item.id.hashCode,
+            title: item.title,
+            body: item.message,
+          );
+        }
+
+        await prefs.setString(
+            'last_notification_id', allNotifications.first.id);
+      }
     } catch (e) {
       debugPrint('Error fetching notifications: $e');
     } finally {

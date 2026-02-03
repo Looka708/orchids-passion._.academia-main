@@ -30,10 +30,9 @@ class _ChaptersScreenState extends State<ChaptersScreen> {
   void initState() {
     super.initState();
     Future.microtask(() async {
-      context
+      await context
           .read<CourseProvider>()
           .fetchChaptersForSubject(widget.courseSlug, widget.subjectTitle);
-      await Future.delayed(const Duration(milliseconds: 1500));
       if (mounted) {
         setState(() {
           _isInitialLoading = false;

@@ -23,8 +23,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   void initState() {
     super.initState();
     Future.microtask(() async {
-      context.read<CourseProvider>().fetchSubjectsForCourse(widget.course.slug);
-      await Future.delayed(const Duration(milliseconds: 1500));
+      await context
+          .read<CourseProvider>()
+          .fetchSubjectsForCourse(widget.course.slug);
       if (mounted) {
         setState(() {
           _isInitialLoading = false;

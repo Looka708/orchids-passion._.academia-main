@@ -76,39 +76,21 @@ class _McqManagementScreenState extends State<McqManagementScreen> {
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      color: Colors.white,
       child: TextField(
         controller: _searchController,
-        onChanged: (value) => setState(() => _searchQuery = value),
+        onChanged: (v) => setState(() => _searchQuery = v),
         decoration: InputDecoration(
-          hintText: 'Search questions, subjects, or courses...',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() => _searchQuery = '');
-                  },
-                )
-              : null,
+          hintText: 'Search questions, subjects, or programs...',
+          prefixIcon:
+              const Icon(Icons.search_rounded, color: Color(0xFF64748B)),
           filled: true,
-          fillColor: Colors.grey[100],
+          fillColor: const Color(0xFFF1F5F9),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
         ),
       ),
     );
@@ -135,33 +117,46 @@ class _McqManagementScreenState extends State<McqManagementScreen> {
   Widget _buildMcqCard(BuildContext context, Map<String, dynamic> mcq) {
     final options = mcq['options'] as List? ?? [];
     final correctAnswer = mcq['correct_answer'].toString();
-    final chapter = mcq['chapter']?.toString() ?? 'Uncategorized';
+    final chapter = mcq['chapter']?.toString() ?? 'General';
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey[200]!),
-      ),
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        collapsedShape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           mcq['question_text'] ?? 'No Question Text',
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            color: Color(0xFF0F172A),
+            height: 1.3,
+          ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _buildBadge(mcq['subject'] ?? 'General', Colors.blue),
-              const SizedBox(width: 8),
-              _buildBadge(mcq['course_slug'] ?? 'All', Colors.orange),
-              const SizedBox(width: 8),
-              _buildBadge(chapter, Colors.purple),
-            ],
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildBadge(
+                    mcq['subject'] ?? 'General', const Color(0xFF4F46E5)),
+                const SizedBox(width: 8),
+                _buildBadge(
+                    mcq['course_slug'] ?? 'All', const Color(0xFFF59E0B)),
+                const SizedBox(width: 8),
+                _buildBadge(chapter, const Color(0xFF8B5CF6)),
+              ],
+            ),
           ),
         ),
         children: [
@@ -170,13 +165,17 @@ class _McqManagementScreenState extends State<McqManagementScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Divider(),
-                const SizedBox(height: 8),
-                const Text('Options',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        color: Colors.grey)),
+                const Divider(color: Color(0xFFE2E8F0)),
+                const SizedBox(height: 12),
+                const Text(
+                  'ANSWER OPTIONS',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                    color: Color(0xFF94A3B8),
+                    letterSpacing: 1,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 ...List.generate(options.length, (i) {
                   final isCorrect =
@@ -186,28 +185,52 @@ class _McqManagementScreenState extends State<McqManagementScreen> {
                     margin: const EdgeInsets.only(bottom: 8),
                     decoration: BoxDecoration(
                       color: isCorrect
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.grey[50],
+                          ? const Color(0xFFF0FDF4) // Green 50
+                          : const Color(0xFFF8FAFC), // Slate 50
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isCorrect
-                            ? Colors.green.withOpacity(0.3)
-                            : Colors.grey[200]!,
+                            ? const Color(0xFFBBF7D0) // Green 200
+                            : const Color(0xFFE2E8F0), // Slate 200
                       ),
                     ),
                     child: Row(
                       children: [
-                        Text('${String.fromCharCode(65 + i)}.',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: isCorrect
-                                    ? Colors.green
-                                    : Colors.grey[600])),
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isCorrect
+                                ? const Color(0xFF22C55E)
+                                : const Color(0xFF64748B),
+                          ),
+                          child: Center(
+                            child: Text(
+                              String.fromCharCode(65 + i),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12),
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: Text(options[i].toString())),
+                        Expanded(
+                          child: Text(
+                            options[i].toString(),
+                            style: TextStyle(
+                              color: isCorrect
+                                  ? const Color(0xFF166534)
+                                  : const Color(0xFF334155),
+                              fontWeight:
+                                  isCorrect ? FontWeight.w600 : FontWeight.w500,
+                            ),
+                          ),
+                        ),
                         if (isCorrect)
-                          const Icon(Icons.check_circle,
-                              color: Colors.green, size: 18),
+                          const Icon(Icons.check_circle_rounded,
+                              color: Color(0xFF22C55E), size: 18),
                       ],
                     ),
                   );
@@ -218,15 +241,23 @@ class _McqManagementScreenState extends State<McqManagementScreen> {
                   children: [
                     TextButton.icon(
                       onPressed: () => _showMcqDialog(context, mcq: mcq),
-                      icon: const Icon(Icons.edit_outlined),
-                      label: const Text('Edit'),
+                      icon: const Icon(Icons.edit_note_rounded, size: 20),
+                      label: const Text('Modify'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF4F46E5),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     TextButton.icon(
                       onPressed: () => _confirmDelete(context, mcq),
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
-                      style: TextButton.styleFrom(foregroundColor: Colors.red),
-                      label: const Text('Delete'),
+                      icon: const Icon(Icons.delete_sweep_rounded,
+                          color: Color(0xFFEF4444), size: 20),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFEF4444),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      label: const Text('Remove'),
                     ),
                   ],
                 )
@@ -240,18 +271,19 @@ class _McqManagementScreenState extends State<McqManagementScreen> {
 
   Widget _buildBadge(String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Text(
         text.toUpperCase(),
         style: TextStyle(
           color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.8,
         ),
       ),
     );

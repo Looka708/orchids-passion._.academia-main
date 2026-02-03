@@ -6,6 +6,7 @@ import 'package:passion_academia/widgets/infinity_loader.dart';
 import 'package:provider/provider.dart';
 import 'package:passion_academia/core/providers/quiz_provider.dart';
 import 'package:passion_academia/core/providers/auth_provider.dart';
+import 'package:passion_academia/core/config/app_config.dart';
 
 enum QuizState { intro, quiz, results }
 
@@ -33,7 +34,7 @@ class _QuizScreenState extends State<QuizScreen> {
   QuizState _state = QuizState.intro;
   int _currentQuestionIndex = 0;
   int _score = 0;
-  int _timeLeft = 20;
+  int _timeLeft = AppConfig.quizTimerDuration;
   Timer? _timer;
   final Map<int, int> _selectedAnswers = {};
 
@@ -65,7 +66,7 @@ class _QuizScreenState extends State<QuizScreen> {
       _currentQuestionIndex = 0;
       _score = 0;
       _selectedAnswers.clear();
-      _timeLeft = 20;
+      _timeLeft = AppConfig.quizTimerDuration;
     });
     _startTimer();
   }
@@ -95,7 +96,7 @@ class _QuizScreenState extends State<QuizScreen> {
     if (_currentQuestionIndex < questions.length - 1) {
       setState(() {
         _currentQuestionIndex++;
-        _timeLeft = 20;
+        _timeLeft = AppConfig.quizTimerDuration;
       });
       _startTimer();
     } else {
@@ -245,7 +246,7 @@ class _QuizScreenState extends State<QuizScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Subject: ${widget.subjectTitle}\nQuestions: ${questions.length}\nTime: 20s per question',
+            'Subject: ${widget.subjectTitle}\nQuestions: ${questions.length}\nTime: ${AppConfig.quizTimerDuration}s per question',
             textAlign: TextAlign.center,
             style: TextStyle(
                 color: Theme.of(context).textTheme.bodyMedium?.color,

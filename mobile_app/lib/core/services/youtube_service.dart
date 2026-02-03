@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class YoutubeService {
@@ -36,11 +37,11 @@ class YoutubeService {
           };
         }).toList();
       } else {
-        print('YouTube API Error: ${response.body}');
+        debugPrint('YouTube API Error: ${response.body}');
         return [];
       }
     } catch (e) {
-      print('YouTube API Exception: $e');
+      debugPrint('YouTube API Exception: $e');
       return [];
     }
   }

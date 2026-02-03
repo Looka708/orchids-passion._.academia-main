@@ -18,7 +18,8 @@ class LeaderboardProvider extends ChangeNotifier {
     try {
       final users = await FirebaseService.fetchAllUsers();
       // Sort by XP descending
-      users.sort((a, b) => (b['xp'] as int).compareTo(a['xp'] as int));
+      users.sort(
+          (a, b) => ((b['xp'] ?? 0) as int).compareTo((a['xp'] ?? 0) as int));
 
       // Take top 10
       _topUsers = users.take(10).toList();
@@ -39,7 +40,8 @@ class LeaderboardProvider extends ChangeNotifier {
     try {
       final users = await FirebaseService.fetchAllUsers();
       // Sort by Streak descending
-      users.sort((a, b) => (b['streak'] as int).compareTo(a['streak'] as int));
+      users.sort((a, b) =>
+          ((b['streak'] ?? 0) as int).compareTo((a['streak'] ?? 0) as int));
 
       // Take top 5
       _topUsers = users.take(5).toList();

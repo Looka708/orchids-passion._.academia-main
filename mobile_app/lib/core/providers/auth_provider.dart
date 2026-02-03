@@ -1,4 +1,5 @@
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:passion_academia/core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -255,8 +256,7 @@ class AuthProvider extends ChangeNotifier {
       // 3. Go to APIs & Services > Credentials
       // 4. Find 'OAuth 2.0 Client IDs' > 'Web client (auto-created by Google Service)'
       final googleSignIn = GoogleSignIn(
-        clientId:
-            '705319384418-7bt62gcrvim6di372lbs9kav195j1tev.apps.googleusercontent.com', // Replace with your actual Web Client ID
+        clientId: AppConfig.googleClientId,
         scopes: ['email', 'profile'],
       );
 
@@ -294,7 +294,6 @@ class AuthProvider extends ChangeNotifier {
           final success = await FirebaseService.createUserInFirestore(
             googleUser.displayName ?? 'Google User',
             email,
-            'google_auth_placeholder', // Not used for actual auth
             _token,
           );
 
@@ -360,12 +359,8 @@ class AuthProvider extends ChangeNotifier {
           _token,
         );
       } else {
-        // 2. Firebase Auth Failed -> Check manual Firestore password (for Admin/Special accounts)
-        firestoreData = await FirebaseService.getUserFromFirestore(email, null);
-        if (firestoreData == null || firestoreData['password'] != password) {
-          _error = 'Invalid email or password.';
-          return false;
-        }
+        _error = 'Invalid email or password.';
+        return false;
       }
 
       if (firestoreData != null) {
@@ -377,7 +372,7 @@ class AuthProvider extends ChangeNotifier {
         }
 
         _user = UserProfile.fromJson(firestoreData);
-        _token = authData?['idToken'];
+        _token = authData['idToken'];
 
         // Save to Local Storage
         final prefs = await SharedPreferences.getInstance();
@@ -415,7 +410,6 @@ class AuthProvider extends ChangeNotifier {
         final success = await FirebaseService.createUserInFirestore(
           name,
           email,
-          password,
           _token,
         );
 
