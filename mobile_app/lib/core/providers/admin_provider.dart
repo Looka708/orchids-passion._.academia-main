@@ -169,13 +169,35 @@ class AdminProvider extends ChangeNotifier {
   }
 
   Future<bool> addCourse(Map<String, dynamic> courseData) async {
-// ...
     try {
-      await _supabase.from('classes').insert(courseData);
-      notifyListeners();
-      return true;
+      final response =
+          await _supabase.from('classes').insert(courseData).select();
+      if (response.isNotEmpty) {
+        notifyListeners();
+        return true;
+      }
+      return false;
     } catch (e) {
       debugPrint('Error adding course: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateCourse(
+      String courseId, Map<String, dynamic> courseData) async {
+    try {
+      final response = await _supabase
+          .from('classes')
+          .update(courseData)
+          .eq('id', courseId)
+          .select();
+      if (response.isNotEmpty) {
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error updating course: $e');
       return false;
     }
   }
