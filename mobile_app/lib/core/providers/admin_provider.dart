@@ -87,18 +87,35 @@ class AdminProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _mcqs = [];
   List<Map<String, dynamic>> get mcqs => _mcqs;
 
+  List<String> get uniqueSubjects {
+    final subjects = _mcqs
+        .map((m) => m['subject']?.toString() ?? 'General')
+        .toSet()
+        .toList();
+    subjects.sort();
+    return subjects;
+  }
+
+  List<String> get uniqueCourses {
+    final courses = _mcqs
+        .map((m) => m['course_slug']?.toString() ?? 'All')
+        .toSet()
+        .toList();
+    courses.sort();
+    return courses;
+  }
+
   Future<void> fetchMcqs() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
     try {
-      final response = await _supabase
-          .from('mcqs')
-          .select()
-          .order('id', ascending: false)
-          .limit(50);
+      final response =
+          await _supabase.from('mcqs').select().order('id', ascending: false);
       _mcqs = List<Map<String, dynamic>>.from(response);
     } catch (e) {
       _error = e.toString();
+      debugPrint('Error fetching MCQs: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -107,11 +124,34 @@ class AdminProvider extends ChangeNotifier {
 
   Future<bool> addMcq(Map<String, dynamic> mcqData) async {
     try {
-      await _supabase.from('mcqs').insert(mcqData);
-      notifyListeners();
-      return true;
+      final response = await _supabase.from('mcqs').insert(mcqData).select();
+      if (response.isNotEmpty) {
+        _mcqs.insert(0, response[0]);
+        notifyListeners();
+        return true;
+      }
+      return false;
     } catch (e) {
       debugPrint('Error adding MCQ: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateMcq(String mcqId, Map<String, dynamic> mcqData) async {
+    try {
+      final response =
+          await _supabase.from('mcqs').update(mcqData).eq('id', mcqId).select();
+      if (response.isNotEmpty) {
+        final index = _mcqs.indexWhere((m) => m['id'].toString() == mcqId);
+        if (index != -1) {
+          _mcqs[index] = response[0];
+          notifyListeners();
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error updating MCQ: $e');
       return false;
     }
   }
@@ -119,6 +159,7 @@ class AdminProvider extends ChangeNotifier {
   Future<bool> deleteMcq(String mcqId) async {
     try {
       await _supabase.from('mcqs').delete().eq('id', mcqId);
+      _mcqs.removeWhere((m) => m['id'].toString() == mcqId);
       notifyListeners();
       return true;
     } catch (e) {

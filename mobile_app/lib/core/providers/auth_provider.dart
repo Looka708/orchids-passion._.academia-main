@@ -1,3 +1,4 @@
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -93,8 +94,10 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       try {
-        final freshData =
-            await FirebaseService.getUserFromFirestore(_user!.email, _token);
+        final freshData = await FirebaseService.getUserFromFirestore(
+          _user!.email,
+          _token,
+        );
         if (freshData != null) {
           _user = UserProfile.fromJson(freshData);
           await prefs.setString('user_profile', jsonEncode(_user!.toJson()));
@@ -102,7 +105,9 @@ class AuthProvider extends ChangeNotifier {
 
         // Fetch progress (completed chapters)
         final progressData = await FirebaseService.getProgressFromFirestore(
-            _user!.email, _token);
+          _user!.email,
+          _token,
+        );
         if (progressData != null) {
           final List<dynamic> completed =
               progressData['completedChapters'] ?? [];
@@ -115,8 +120,12 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateStats(int xpEarned, bool updateStreak,
-      {int? questionsCount, int? correctCount}) async {
+  Future<void> updateStats(
+    int xpEarned,
+    bool updateStreak, {
+    int? questionsCount,
+    int? correctCount,
+  }) async {
     if (_user == null) return;
 
     // 1. Update User Document (Main stats)
@@ -128,12 +137,17 @@ class AuthProvider extends ChangeNotifier {
     }
 
     final success = await FirebaseService.updateFirestoreField(
-        _user!.email, updates, _token);
+      _user!.email,
+      updates,
+      _token,
+    );
 
     // 2. Update Progress Subcollection (Web Compatibility)
     try {
-      final currentProgress =
-          await FirebaseService.getProgressFromFirestore(_user!.email, _token);
+      final currentProgress = await FirebaseService.getProgressFromFirestore(
+        _user!.email,
+        _token,
+      );
       if (currentProgress != null) {
         final Map<String, dynamic> progressUpdates = {
           'totalXP': (_user!.xp) + xpEarned,
@@ -155,7 +169,10 @@ class AuthProvider extends ChangeNotifier {
         }
 
         await FirebaseService.updateProgressInFirestore(
-            _user!.email, progressUpdates, _token);
+          _user!.email,
+          progressUpdates,
+          _token,
+        );
       }
     } catch (e) {
       debugPrint('Error updating progress subcollection: $e');
@@ -193,7 +210,9 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners(); // Immediate UI update
 
         final currentProgress = await FirebaseService.getProgressFromFirestore(
-            _user!.email, _token);
+          _user!.email,
+          _token,
+        );
 
         if (currentProgress != null) {
           final List<dynamic> completed =
@@ -210,7 +229,7 @@ class AuthProvider extends ChangeNotifier {
                   'stats': {
                     ...stats,
                     'chaptersCompleted': (stats['chaptersCompleted'] ?? 0) + 1,
-                  }
+                  },
                 },
                 _token);
           }
@@ -221,6 +240,104 @@ class AuthProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error marking chapter completed: $e');
+    }
+  }
+
+  Future<bool> loginWithGoogle() async {
+    _error = null;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Note: You must provide a Web Client ID for Google Sign-In to work on Chrome.
+      // 1. Go to https://console.cloud.google.com/
+      // 2. Select your project: 'cyber-security-460017'
+      // 3. Go to APIs & Services > Credentials
+      // 4. Find 'OAuth 2.0 Client IDs' > 'Web client (auto-created by Google Service)'
+      final googleSignIn = GoogleSignIn(
+        clientId:
+            '705319384418-7bt62gcrvim6di372lbs9kav195j1tev.apps.googleusercontent.com', // Replace with your actual Web Client ID
+        scopes: ['email', 'profile'],
+      );
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        _isLoading = false;
+        notifyListeners();
+        return false; // User cancelled
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        _error = 'Failed to get ID Token from Google.';
+        return false;
+      }
+
+      // 1. Authenticate with Firebase using the Google ID Token
+      final authData = await FirebaseService.signInWithGoogle(idToken);
+
+      if (authData != null) {
+        final String email = authData['email'];
+        _token = authData['idToken'];
+
+        // 2. Check if user exists in Firestore
+        var firestoreData = await FirebaseService.getUserFromFirestore(
+          email,
+          _token,
+        );
+
+        if (firestoreData == null) {
+          // New user -> Create profile
+          final success = await FirebaseService.createUserInFirestore(
+            googleUser.displayName ?? 'Google User',
+            email,
+            'google_auth_placeholder', // Not used for actual auth
+            _token,
+          );
+
+          if (success) {
+            firestoreData = await FirebaseService.getUserFromFirestore(
+              email,
+              _token,
+            );
+          }
+        }
+
+        if (firestoreData != null) {
+          if (firestoreData['active'] == false) {
+            _error =
+                'Your account is inactive. Please contact an administrator.';
+            return false;
+          }
+
+          _user = UserProfile.fromJson(firestoreData);
+
+          // Save to Local Storage
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('user_profile', jsonEncode(_user!.toJson()));
+          if (_token != null) {
+            await prefs.setString('auth_token', _token!);
+          }
+
+          return true;
+        } else {
+          _error = 'Failed to create or retrieve user profile.';
+          return false;
+        }
+      } else {
+        _error = 'Firebase Google authentication failed.';
+        return false;
+      }
+    } catch (e) {
+      _error = 'Google Sign-In Error: $e';
+      debugPrint('Google Sign-In Error: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -238,8 +355,10 @@ class AuthProvider extends ChangeNotifier {
       if (authData != null) {
         // Firebase Auth Success -> Get profile from Firestore
         _token = authData['idToken'];
-        firestoreData =
-            await FirebaseService.getUserFromFirestore(email, _token);
+        firestoreData = await FirebaseService.getUserFromFirestore(
+          email,
+          _token,
+        );
       } else {
         // 2. Firebase Auth Failed -> Check manual Firestore password (for Admin/Special accounts)
         firestoreData = await FirebaseService.getUserFromFirestore(email, null);
@@ -294,12 +413,18 @@ class AuthProvider extends ChangeNotifier {
         _token = authData['idToken'];
         // 2. Create user document in Firestore
         final success = await FirebaseService.createUserInFirestore(
-            name, email, password, _token);
+          name,
+          email,
+          password,
+          _token,
+        );
 
         if (success) {
           // 3. Fetch the newly created profile
-          final firestoreData =
-              await FirebaseService.getUserFromFirestore(email, _token);
+          final firestoreData = await FirebaseService.getUserFromFirestore(
+            email,
+            _token,
+          );
 
           if (firestoreData != null) {
             _user = UserProfile.fromJson(firestoreData);
@@ -350,14 +475,18 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       // 1. Upload to Supabase Storage
-      final photoUrl =
-          await SupabaseService.uploadProfilePicture(imageBytes, _user!.id);
+      final photoUrl = await SupabaseService.uploadProfilePicture(
+        imageBytes,
+        _user!.id,
+      );
       if (photoUrl == null) return false;
 
       // 2. Update Supabase Database (Optional Sync)
       // This is less critical than Firestore
-      final supabaseSuccess =
-          await SupabaseService.updateProfileUrl(_user!.email, photoUrl);
+      final supabaseSuccess = await SupabaseService.updateProfileUrl(
+        _user!.email,
+        photoUrl,
+      );
       if (!supabaseSuccess) {
         debugPrint('Warning: Supabase profile table update failed.');
       }
@@ -365,7 +494,10 @@ class AuthProvider extends ChangeNotifier {
       // 3. Update Firestore (Primary Source of Truth)
       // Matching web's key 'photoURL'
       final firestoreSuccess = await FirebaseService.updateFirestoreField(
-          _user!.email, {'photoURL': photoUrl}, _token);
+        _user!.email,
+        {'photoURL': photoUrl},
+        _token,
+      );
 
       if (firestoreSuccess) {
         // 4. Update local state

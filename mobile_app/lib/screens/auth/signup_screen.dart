@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:passion_academia/core/providers/auth_provider.dart';
 import 'package:passion_academia/widgets/common/custom_text_field.dart';
+import 'package:passion_academia/screens/home/home_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -88,6 +89,34 @@ class _SignupScreenState extends State<SignupScreen> {
                   : const Text('Create Account'),
             ),
             const SizedBox(height: 24),
+            const Row(
+              children: [
+                Expanded(child: Divider()),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Text('OR'),
+                ),
+                Expanded(child: Divider()),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: context.watch<AuthProvider>().isLoading
+                        ? null
+                        : _handleGoogleLogin,
+                    icon: const Icon(Icons.g_mobiledata, size: 24),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Google Sign Up'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
             Center(
               child: TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -123,6 +152,29 @@ class _SignupScreenState extends State<SignupScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.error ?? 'Signup failed'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    final authProvider = context.read<AuthProvider>();
+
+    final success = await authProvider.loginWithGoogle();
+
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (c) => const HomeScreen()),
+        (route) => false,
+      );
+    } else if (authProvider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.error!),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),

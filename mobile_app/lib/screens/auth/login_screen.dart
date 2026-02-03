@@ -142,7 +142,9 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: context.watch<AuthProvider>().isLoading
+                        ? null
+                        : _handleGoogleLogin,
                     icon: const Icon(Icons.g_mobiledata, size: 24),
                     label: const FittedBox(
                       fit: BoxFit.scaleDown,
@@ -197,6 +199,29 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.error ?? 'Login failed'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    final authProvider = context.read<AuthProvider>();
+
+    final success = await authProvider.loginWithGoogle();
+
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (c) => const HomeScreen()),
+        (route) => false,
+      );
+    } else if (authProvider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.error!),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),

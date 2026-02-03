@@ -40,6 +40,38 @@ class FirebaseService {
     }
   }
 
+  /// Authenticates with Google using an ID Token
+  static Future<Map<String, dynamic>?> signInWithGoogle(String idToken) async {
+    final url = Uri.parse(
+      'https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=$_apiKey',
+    );
+
+    try {
+      final response = await http
+          .post(
+            url,
+            body: jsonEncode({
+              'postBody': 'id_token=$idToken&providerId=google.com',
+              'requestUri': 'http://localhost',
+              'returnIdpCredential': true,
+              'returnSecureToken': true,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return data;
+      } else {
+        debugPrint('Firebase Google Auth Error: ${data['error']?['message']}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Firebase Google Auth Exception: $e');
+      return null;
+    }
+  }
+
   /// Registers a new user using Firebase Auth REST API
   static Future<Map<String, dynamic>?> signUpWithEmail(
       String email, String password) async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:passion_academia/core/providers/auth_provider.dart';
 import 'package:passion_academia/widgets/common/stat_card.dart';
 import 'package:passion_academia/screens/auth/welcome_screen.dart';
@@ -22,28 +23,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(
       source: ImageSource.gallery,
-      maxWidth: 512,
-      maxHeight: 512,
-      imageQuality: 75,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
     );
 
     if (image != null) {
-      final bytes = await image.readAsBytes();
       if (!mounted) return;
 
-      final success =
-          await context.read<AuthProvider>().updateProfilePicture(bytes);
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(success
-              ? 'Profile picture updated!'
-              : 'Failed to update picture.'),
-          backgroundColor: success ? Colors.green : Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: image.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Profile Picture',
+            toolbarColor: Theme.of(context).colorScheme.primary,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+            hideBottomControls: true,
+          ),
+          IOSUiSettings(
+            title: 'Crop Profile Picture',
+            aspectRatioLockEnabled: true,
+            resetButtonHidden: true,
+            rotateButtonsHidden: true,
+            rotateClockwiseButtonHidden: true,
+          ),
+          WebUiSettings(
+            context: context,
+            presentStyle: WebPresentStyle.dialog,
+            size: const CropperSize(width: 500, height: 500),
+          ),
+        ],
       );
+
+      if (croppedFile != null) {
+        final bytes = await croppedFile.readAsBytes();
+        if (!mounted) return;
+
+        final success =
+            await context.read<AuthProvider>().updateProfilePicture(bytes);
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? 'Profile picture updated!'
+                : 'Failed to update picture.'),
+            backgroundColor: success ? Colors.green : Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

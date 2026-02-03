@@ -36,8 +36,11 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               ))
           : Row(
               children: [
-                Icon(Icons.school,
-                    color: Theme.of(context).colorScheme.primary, size: 28),
+                Image.asset(
+                  'assets/images/logo.png',
+                  width: 28,
+                  height: 28,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Passion',

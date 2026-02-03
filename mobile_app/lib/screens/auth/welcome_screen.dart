@@ -54,8 +54,11 @@ class WelcomeScreen extends StatelessWidget {
                       )
                     ],
                   ),
-                  child: const Icon(Icons.school,
-                      size: 80, color: Color(0xFF16A34A)),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 80,
+                    height: 80,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 const Text(
