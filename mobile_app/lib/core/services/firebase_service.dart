@@ -462,6 +462,8 @@ class FirebaseService {
       debugPrint('Error fetching activities: $e');
       return [];
     }
+  }
+
   /// Aggregates user activities for reports
   static Future<List<Map<String, dynamic>>> aggregateUserActivities({
     DateTime? startDate,
@@ -473,9 +475,9 @@ class FirebaseService {
     for (var user in users) {
       final email = user['email'] as String? ?? '';
       if (email.isEmpty) continue;
-      
+
       final activities = await getUserActivities(email, null);
-      
+
       final filteredActivities = activities.where((a) {
         if (a['timestamp'] == null) return false;
         final ts = DateTime.parse(a['timestamp']);
@@ -491,7 +493,8 @@ class FirebaseService {
         'totalXp': user['xp'] ?? 0,
         'currentStreak': user['streak'] ?? 0,
         'longestStreak': user['longestStreak'] ?? user['streak'] ?? 0,
-        'totalLogins': filteredActivities.where((a) => a['type'] == 'login').length,
+        'totalLogins':
+            filteredActivities.where((a) => a['type'] == 'login').length,
         'lastActive': user['lastActive'] ?? user['created_at'],
         'dailyActivity': _groupActivitiesByDate(filteredActivities),
       });
@@ -499,7 +502,8 @@ class FirebaseService {
     return reportData;
   }
 
-  static List<Map<String, dynamic>> _groupActivitiesByDate(List<Map<String, dynamic>> activities) {
+  static List<Map<String, dynamic>> _groupActivitiesByDate(
+      List<Map<String, dynamic>> activities) {
     Map<String, Map<String, dynamic>> grouped = {};
     for (var a in activities) {
       if (a['timestamp'] == null) continue;
@@ -509,7 +513,8 @@ class FirebaseService {
       }
       grouped[date]!['xpEarned'] += (a['xpGained'] ?? 0) as int;
       if (a['type'] == 'quiz') {
-        grouped[date]!['questionsSolved'] += (a['details']?['questionsAnswered'] ?? 0) as int;
+        grouped[date]!['questionsSolved'] +=
+            (a['details']?['questionsAnswered'] ?? 0) as int;
       }
     }
     return grouped.values.toList();
@@ -536,4 +541,3 @@ class FirebaseService {
     return [];
   }
 }
-

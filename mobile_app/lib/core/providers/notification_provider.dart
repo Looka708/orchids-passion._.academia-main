@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:passion_academia/models/notification.dart';
 import 'package:passion_academia/core/services/firebase_service.dart';
@@ -7,15 +8,52 @@ import 'package:passion_academia/core/services/local_notification_service.dart';
 class NotificationProvider extends ChangeNotifier {
   List<AppNotification> _notifications = [];
   bool _isLoading = false;
+  Timer? _pollingTimer;
+  String? _currentEmail;
+  String? _currentToken;
 
   List<AppNotification> get notifications => _notifications;
   bool get isLoading => _isLoading;
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
 
-  Future<void> fetchNotifications(String email, String token) async {
-    _isLoading = true;
-    notifyListeners();
+  NotificationProvider() {
+    // Optionally start a minimal poll or wait for login
+  }
 
+  void startRealTimePolling(String email, String token) {
+    _currentEmail = email;
+    _currentToken = token;
+    _pollingTimer?.cancel();
+
+    // Initial fetch
+    fetchNotifications(email, token);
+
+    // Check for new broadcasts/activities every 30 seconds
+    _pollingTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (_currentEmail != null && _currentToken != null) {
+        fetchNotifications(_currentEmail!, _currentToken!, isBackground: true);
+      }
+    });
+  }
+
+  void stopPolling() {
+    _pollingTimer?.cancel();
+    _currentEmail = null;
+    _currentToken = null;
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> fetchNotifications(String email, String token,
+      {bool isBackground = false}) async {
+    if (!isBackground) {
+      _isLoading = true;
+      notifyListeners();
+    }
     try {
       // 1. Fetch user specific activities
       final activities = await FirebaseService.getUserActivities(email, token);

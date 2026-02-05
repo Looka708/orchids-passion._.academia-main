@@ -9,6 +9,7 @@ import 'package:passion_academia/screens/profile/personal_info_screen.dart';
 import 'package:passion_academia/widgets/infinity_loader.dart';
 import 'package:passion_academia/screens/admin/admin_panel_screen.dart';
 import 'package:passion_academia/core/services/firebase_service.dart';
+import 'package:passion_academia/core/providers/notification_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -296,6 +297,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             ListTile(
               onTap: () {
+                context.read<NotificationProvider>().stopPolling();
                 authProvider.logout();
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (c) => const WelcomeScreen()),

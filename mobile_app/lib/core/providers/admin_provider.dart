@@ -250,28 +250,16 @@ class AdminProvider extends ChangeNotifier {
   Future<bool> sendGlobalNotification(
       String title, String message, String type) async {
     try {
-      final users = await FirebaseService.fetchAllUsers();
-      bool allSuccessful = true;
+      // Use the Broadcast system which all users monitor.
+      // This is much faster than looping through every user individually.
+      final broadcast = {
+        'title': title,
+        'message': message,
+        'type': type,
+        'scheduledAt': DateTime.now(),
+      };
 
-      for (var user in users) {
-        final email = user['email'] as String?;
-        if (email != null) {
-          // Log as activity in each user's collection
-          final success = await FirebaseService.logActivity(
-              email,
-              type,
-              0,
-              {
-                'title': title,
-                'message': message,
-                'isGlobal': true,
-                'adminSent': true,
-              },
-              null);
-          if (!success) allSuccessful = false;
-        }
-      }
-      return allSuccessful;
+      return await FirebaseService.saveBroadcast(broadcast);
     } catch (e) {
       debugPrint('Error sending global notification: $e');
       return false;

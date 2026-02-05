@@ -34,6 +34,7 @@ class _QuizScreenState extends State<QuizScreen> {
   QuizState _state = QuizState.intro;
   int _currentQuestionIndex = 0;
   int _score = 0;
+  int _xpEarned = 0;
   int _timeLeft = AppConfig.quizTimerDuration;
   Timer? _timer;
   final Map<int, int> _selectedAnswers = {};
@@ -116,16 +117,17 @@ class _QuizScreenState extends State<QuizScreen> {
     });
 
     final finalScore = ((correct / questions.length) * 100).toInt();
+    final xpEarned = correct * 10;
+    final bool updateStreak = finalScore >= 60;
+
     setState(() {
       _score = finalScore;
+      _xpEarned = xpEarned;
       _state = QuizState.results;
     });
 
     final auth = context.read<AuthProvider>();
     if (auth.isAuthenticated) {
-      final xpEarned = correct * 10;
-      final bool updateStreak = finalScore >= 60;
-
       context.read<QuizProvider>().submitResult(
             userId: auth.userProfile!.id,
             courseSlug: widget.courseSlug,
@@ -548,8 +550,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     '${(_score * questions.length / 100).toInt()}',
                     Colors.green),
                 const SizedBox(width: 16),
-                _buildResultStat(
-                    'XP Earned', isPassed ? '+50' : '+10', Colors.amber),
+                _buildResultStat('XP Earned', '+$_xpEarned', Colors.amber),
               ],
             ),
 

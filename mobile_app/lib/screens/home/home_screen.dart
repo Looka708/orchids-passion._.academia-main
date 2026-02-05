@@ -10,6 +10,7 @@ import 'package:passion_academia/widgets/common/stat_card.dart';
 import 'package:passion_academia/core/providers/auth_provider.dart';
 import 'package:passion_academia/core/providers/course_provider.dart';
 import 'package:passion_academia/widgets/home/xp_progress_bar.dart';
+import 'package:passion_academia/core/providers/notification_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +27,17 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
+
+    // Start real-time notification polling
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthProvider>();
+      if (auth.isAuthenticated && auth.user?.email != null) {
+        context.read<NotificationProvider>().startRealTimePolling(
+              auth.user!.email,
+              auth.token ?? '',
+            );
+      }
+    });
   }
 
   @override
