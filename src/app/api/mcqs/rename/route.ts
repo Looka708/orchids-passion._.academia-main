@@ -37,6 +37,19 @@ export async function POST(request: NextRequest) {
       }
       updateData = { subject: new_name };
       matchConditions = { course_type, subject: old_name };
+
+      // Update subjects table as well
+      await supabase
+        .from("subjects")
+        .update({ subject_name: new_name })
+        .match({ course_type, subject_name: old_name });
+
+      // Update chapters table as well
+      await supabase
+        .from("chapters")
+        .update({ subject: new_name })
+        .match({ course_type, subject: old_name });
+
     } else if (type === "chapter") {
       if (!course_type || !subject || !old_name) {
         return NextResponse.json(
@@ -46,6 +59,12 @@ export async function POST(request: NextRequest) {
       }
       updateData = { chapter: new_name };
       matchConditions = { course_type, subject, chapter: old_name };
+
+      // Update chapters table as well
+      await supabase
+        .from("chapters")
+        .update({ chapter_name: new_name })
+        .match({ course_type, subject, chapter_name: old_name });
     } else {
       return NextResponse.json(
         { success: false, error: "Invalid rename type" },

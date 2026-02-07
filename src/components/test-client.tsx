@@ -149,10 +149,14 @@ export default function TestClient({ grade, subject, chapterTitle, chapterMcqs, 
       const shuffled = [...uniqueSource].sort(() => 0.5 - Math.random());
       const selectedNumQuestions = Math.min(numQuestions, shuffled.length);
 
-      // Clean up duplicate options within EACH question
+      // Clean up duplicate and empty options within EACH question
       const cleaned = shuffled.slice(0, selectedNumQuestions).map(mcq => ({
         ...mcq,
-        options: Array.from(new Set(mcq.options.map(opt => typeof opt === 'string' ? opt : JSON.stringify(opt))))
+        options: Array.from(new Set(
+          mcq.options
+            .map(opt => typeof opt === 'string' ? opt.trim() : JSON.stringify(opt))
+            .filter(opt => opt !== "")
+        ))
           .map(opt => {
             try { return JSON.parse(opt); } catch (e) { return opt; }
           })

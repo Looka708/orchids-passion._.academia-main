@@ -79,25 +79,33 @@ class QuizProvider extends ChangeNotifier {
       _questions = data.map((json) {
         // Handle options which could be stored as a List or JSON string
         List<String> options = [];
-        if (json['options'] is List) {
-          options = List<String>.from(json['options']);
-        } else if (json['options'] is String) {
+        dynamic rawOptions = json['options'];
+
+        if (rawOptions is List) {
+          options = rawOptions.map((e) => e?.toString() ?? '').toList();
+        } else if (rawOptions is String) {
           // Fallback if it's a string representation
           try {
-            final decoded = jsonDecode(json['options']);
+            final decoded = jsonDecode(rawOptions);
             if (decoded is List) {
-              options = List<String>.from(decoded);
+              options = decoded.map((e) => e?.toString() ?? '').toList();
+            } else {
+              options = rawOptions.split(',');
             }
           } catch (_) {
-            options = json['options'].toString().split(',');
+            options = rawOptions.split(',');
           }
         }
+
+        // Clean up options: trim and remove empty ones
+        options =
+            options.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
 
         return Question(
           id: json['id'].toString(),
           text: json['question_text'] ?? '',
           options: options,
-          correctAnswer: json['correct_answer'] ?? '',
+          correctAnswer: (json['correct_answer'] ?? '').toString().trim(),
           language: json['language'],
         );
       }).toList();
@@ -148,18 +156,31 @@ class QuizProvider extends ChangeNotifier {
 
         _questions = selected.map((json) {
           List<String> options = [];
-          if (json['options'] is List) {
-            options = List<String>.from(json['options']);
-          } else {
-            // Handle string case
-            options = json['options'].toString().split(',');
+          dynamic rawOptions = json['options'];
+
+          if (rawOptions is List) {
+            options = rawOptions.map((e) => e?.toString() ?? '').toList();
+          } else if (rawOptions is String) {
+            try {
+              final decoded = jsonDecode(rawOptions);
+              if (decoded is List) {
+                options = decoded.map((e) => e?.toString() ?? '').toList();
+              } else {
+                options = rawOptions.split(',');
+              }
+            } catch (_) {
+              options = rawOptions.split(',');
+            }
           }
+
+          options =
+              options.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
 
           return Question(
             id: json['id'].toString(),
             text: json['question_text'] ?? 'AI Question',
             options: options,
-            correctAnswer: json['correct_answer'] ?? '',
+            correctAnswer: (json['correct_answer'] ?? '').toString().trim(),
             language: json['language'],
           );
         }).toList();

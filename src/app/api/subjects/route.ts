@@ -72,10 +72,26 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
         }
 
+        // Fetch old subject data to check for name changes
+        const { data: oldData, error: fetchError } = await supabase
+            .from('subjects')
+            .select('subject_name, course_type')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !oldData) {
+            return NextResponse.json({ success: false, error: 'Subject not found' }, { status: 404 });
+        }
+
+        const oldName = oldData.subject_name;
+        const newName = body.subject_name;
+        const courseType = oldData.course_type;
+
+        // Start updating the subject
         const { data, error } = await supabase
             .from('subjects')
             .update({
-                subject_name: body.subject_name,
+                subject_name: newName,
                 description: body.description,
                 icon_name: body.icon_name,
             })
@@ -84,6 +100,23 @@ export async function PUT(request: NextRequest) {
 
         if (error) {
             return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        }
+
+        // Propagate name change if necessary
+        if (newName && oldName && newName !== oldName) {
+            // Update MCQs
+            await supabase
+                .from('mcqs')
+                .update({ subject: newName })
+                .eq('course_type', courseType)
+                .eq('subject', oldName);
+
+            // Update Chapters
+            await supabase
+                .from('chapters')
+                .update({ subject: newName })
+                .eq('course_type', courseType)
+                .eq('subject', oldName);
         }
 
         return NextResponse.json({ success: true, data: data[0] });

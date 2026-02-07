@@ -70,7 +70,11 @@ export default function DynamicChapterTestPage() {
                         id: m.question_number,
                         questionText: m.question_text,
                         questionImage: m.question_image,
-                        options: Array.from(new Set(m.options)), // Deduplicate options for old MCQs
+                        options: Array.from(new Set(
+                            m.options
+                                .map((opt: any) => (opt || "").toString().trim())
+                                .filter((opt: string) => opt !== "")
+                        )), // Deduplicate and filter empty options
                         correctAnswer: m.correct_answer,
                         language: m.language
                     }));
